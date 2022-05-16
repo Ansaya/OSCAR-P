@@ -1,0 +1,3 @@
+ssh aisprint@158.42.106.10 -p 10022 // connect via ssh to front node
+sudo kubectl get pods -A // get list of all pods
+sudo kubectl describe pods {podname} -n oscar-svc // get log of pod

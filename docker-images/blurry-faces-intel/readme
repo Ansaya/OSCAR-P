@@ -1,0 +1,7 @@
+before building fill content of "openvino" folder with the toolkit from the .tgz
+
+build with:
+    sudo docker build . < Dockerfile --tag intel
+
+run with:
+    sudo docker run --rm -it --privileged -v /dev:/dev --network=host intel bash

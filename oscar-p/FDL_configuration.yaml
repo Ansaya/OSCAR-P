@@ -1,0 +1,16 @@
+functions:
+  oscar:
+  - oscarui_endpoint:
+      cpu: '0.9'
+      image: scrapjack/mask-detector-modded:stable
+      input:
+      - path: dead-start
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: mask-detector
+      output:
+      - path: results
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: script/mask-detector.sh
