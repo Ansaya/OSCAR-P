@@ -42,7 +42,7 @@ def move_file_between_buckets(origin_file, origin_bucket, destination_file, dest
     mc_alias = get_mc_alias()
     origin = mc_alias + "/" + origin_bucket + "/" + origin_file
     destination = mc_alias + "/" + destination_bucket + "/" + destination_file
-    command = "script/mc cp " + origin + " " + destination
+    command = "oscar-p/mc cp " + origin + " " + destination
     execute_command(command)
     return
 
@@ -52,7 +52,7 @@ def move_whole_bucket(origin_bucket, destination_bucket):
     mc_alias = get_mc_alias()
     origin = mc_alias + "/" + origin_bucket
     destination = mc_alias + "/" + destination_bucket
-    command = "script/mc cp " + origin + " " + destination + " -r"
+    command = "oscar-p/mc cp " + origin + " " + destination + " -r"
     execute_command(command)
     print(colored("Done!", "green"))
     return
@@ -60,7 +60,7 @@ def move_whole_bucket(origin_bucket, destination_bucket):
 
 # given a service, returns the list of jobs with their status
 def get_jobs_list(service_name):
-    command = "script/oscar-cli service logs list " + service_name
+    command = "oscar-p/oscar-cli service logs list " + service_name
     logs_list = get_command_output_wrapped(command)
 
     if logs_list:

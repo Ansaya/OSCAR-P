@@ -2,8 +2,9 @@
 
 import subprocess
 import time
+import json
 
-from paramiko import SSHClient, AutoAddPolicy
+from paramiko import SSHClient, AutoAddPolicy, RSAKey
 from termcolor import colored
 
 
@@ -38,6 +39,8 @@ def get_command_output_wrapped(command):
         lines, errors = get_command_output(command)
         if errors:  # empty list equals to False
             show_warning("Errors encountered, retrying in " + str(t) + " seconds")
+            for e in errors:
+                show_external_error(e)
             time.sleep(t)
         else:
             return lines
@@ -45,12 +48,16 @@ def get_command_output_wrapped(command):
     quit()
 
 
+def show_external_error(message):
+    print(colored(message, "red"))
+
+
 def show_warning(message):
-    print(colored("Warning: " + message, "yellow"))
+    print(colored("\nWarning: " + message, "yellow"))
 
 
 def show_error(message):
-    print(colored("Error: " + message, "red"))
+    print(colored("\nError: " + message, "red"))
 
 
 # GUI utils
@@ -71,8 +78,17 @@ def configure_ssh_client():
     address, port, username = get_cluster_ssh_info()
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
-    client.connect(address, port=port, username=username)
+    private_key = get_private_key()
+    client.connect(address, port=port, username=username, pkey=private_key)
     return client
+
+
+def get_private_key():
+    with open("ssh_private_key.json", "r") as file:
+        data = json.load(file)
+
+    private_key = RSAKey.from_private_key_file(data["path_to_key"], data["password"])
+    return private_key
 
 
 # returns output of a command executed via ssh as a list of lines

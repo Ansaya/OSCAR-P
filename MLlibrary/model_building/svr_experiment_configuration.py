@@ -70,7 +70,7 @@ class SVRExperimentConfiguration(ec.ExperimentConfiguration):
             The signature of the experiment
         """
         signature = prefix.copy()
-        signature.append("C_" + str(self._hyperparameters['c']))
+        signature.append("C_" + str(self._hyperparameters['C']))
         signature.append("epsilon_" + str(self._hyperparameters['epsilon']))
         signature.append("gamma_" + str(self._hyperparameters['gamma']))
         signature.append("kernel_" + str(self._hyperparameters['kernel']))

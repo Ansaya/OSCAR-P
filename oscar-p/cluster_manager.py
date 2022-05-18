@@ -9,12 +9,12 @@ from utils import execute_command, configure_ssh_client, get_ssh_output, get_com
 
 def remove_all_services():
     print(colored("Removing services...", "yellow"))
-    command = "script/oscar-cli service ls"
+    command = "oscar-p/oscar-cli service ls"
     services = get_command_output_wrapped(command)
     services.pop(0)
     for service in services:
         service = service.split()[0]
-        command = "script/oscar-cli service remove " + service
+        command = "oscar-p/oscar-cli service remove " + service
         execute_command(command)
     print(colored("Done!", "green"))
 
@@ -22,13 +22,13 @@ def remove_all_services():
 def remove_all_buckets():
     print(colored("Removing buckets...", "yellow"))
     mc_alias = get_mc_alias()
-    command = "script/mc ls " + mc_alias
+    command = "oscar-p/mc ls " + mc_alias
     buckets = get_command_output_wrapped(command)
     for bucket in buckets:
         bucket = bucket.split()[-1]
         if bucket != "storage/":
             bucket = mc_alias + "/" + bucket
-            command = "script/mc rb " + bucket + " --force"
+            command = "oscar-p/mc rb " + bucket + " --force"
             execute_command(command)
     print(colored("Done!", "green"))
     return
@@ -37,7 +37,7 @@ def remove_all_buckets():
 def create_bucket(bucket):
     print(colored("Recreating bucket " + bucket + "...", "yellow"))
     mc_alias = get_mc_alias()
-    command = "script/mc mb " + mc_alias + "/" + bucket
+    command = "oscar-p/mc mb " + mc_alias + "/" + bucket
     execute_command(command)
     print(colored("Done!", "green"))
     return
@@ -46,9 +46,9 @@ def create_bucket(bucket):
 def recreate_bucket(bucket):
     mc_alias = get_mc_alias()
     bucket = mc_alias + "/" + bucket
-    command = "script/mc rb " + bucket + " --force"
+    command = "oscar-p/mc rb " + bucket + " --force"
     execute_command(command)
-    command = "script/mc mb " + bucket
+    command = "oscar-p/mc mb " + bucket
     execute_command(command)
     return
 
@@ -61,13 +61,13 @@ def recreate_output_buckets(service):
 
 # clean all the logs of oscar
 def clean_all_logs():
-    command = "script/oscar-cli service ls"
+    command = "oscar-p/oscar-cli service ls"
     services = get_command_output_wrapped(command)
     services.pop(0)
     for service in services:
         service = service.split()[0]
         print(colored("Cleaning logs of service " + service + "...", "yellow"))
-        command = "script/oscar-cli service logs remove " + service + " --all"
+        command = "oscar-p/oscar-cli service logs remove " + service + " --all"
         execute_command(command)
         print(colored("Done!", "green"))
 
@@ -96,7 +96,7 @@ def make_fdl_buckets_list(buckets):
 
 # generate the FDL file used to prepare OSCAR, starting from the input yaml
 def generate_fdl_configuration(run, cluster_name):
-    with open(r'script/FDL_configuration.yaml', 'w') as file:
+    with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
 
         services = []
         for s in run["services"]:
@@ -121,7 +121,7 @@ def generate_fdl_configuration(run, cluster_name):
 
 # generate the FDL file used to prepare OSCAR, including only the specified service
 def generate_fdl_single_service(service, cluster_name):
-    with open(r'script/FDL_configuration.yaml', 'w') as file:
+    with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
         services = [{cluster_name: {
                 "cpu": service["cpu"],
                 "memory": service["memory"] + "Mi",
@@ -142,7 +142,7 @@ def generate_fdl_single_service(service, cluster_name):
 
 def apply_fdl_configuration():
     print(colored("Adjusting OSCAR configuration...", "yellow"))
-    command = "script/oscar-cli apply script/FDL_configuration.yaml"
+    command = "oscar-p/oscar-cli apply oscar-p/FDL_configuration.yaml"
     get_command_output_wrapped(command)
     print(colored("Done!", "green"))
     return

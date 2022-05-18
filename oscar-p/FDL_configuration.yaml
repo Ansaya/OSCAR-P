@@ -1,10 +1,24 @@
 functions:
   oscar:
-  - oscarui_endpoint:
+  - oscar-vm:
+      cpu: '0.9'
+      image: scrapjack/blurry-faces-modded:stable
+      input:
+      - path: input-videos
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: blur-faces
+      output:
+      - path: blurred-images
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/blurry-faces.sh
+  - oscar-vm:
       cpu: '0.9'
       image: scrapjack/mask-detector-modded:stable
       input:
-      - path: dead-start
+      - path: blurred-images
         storage_provider: minio.default
       memory: 1024Mi
       name: mask-detector
@@ -13,4 +27,4 @@ functions:
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: script/mask-detector.sh
+      script: bash-scripts/mask-detector.sh

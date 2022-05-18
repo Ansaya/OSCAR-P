@@ -36,7 +36,7 @@ def get_timed_jobs_list(service, client):
 
     pod_list = get_kubernetes_pod_list(client)
 
-    command = "script/oscar-cli service logs list " + service
+    command = "oscar-p/oscar-cli service logs list " + service
     logs_list = get_command_output_wrapped(command)
 
     if logs_list:
@@ -82,7 +82,7 @@ def get_timed_jobs_list(service, client):
 # todo change fixed delta to time correction from input file
 # todo change bash_script_start and end to equivalent lines
 def get_oscar_log(service_name, job_name):
-    command = "script/oscar-cli service logs get " + service_name + " " + job_name
+    command = "oscar-p/oscar-cli service logs get " + service_name + " " + job_name
     output = get_command_output_wrapped(command)
 
     date_format_precise = "%d-%m-%Y %H:%M:%S.%f"

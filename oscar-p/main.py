@@ -1,4 +1,5 @@
-# this file calls all methods needed for the whole campaign, keeping it as slim as possible for easier reading (failed miserably btw)
+# this file calls all methods needed for the whole campaign
+# tried to keep it as slim as possible for easier reading (failed miserably)
 
 import os
 import configparser
@@ -14,8 +15,9 @@ from postprocessing import prepare_runtime_data, plot_runtime_core_graph, make_r
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
+from utils import show_error
 
-from MLLibrary import sequence_data_processing
+from MLlibrary import sequence_data_processing
 
 
 def prepare_cluster():
@@ -77,7 +79,7 @@ def end_run_service(service):
 
 def final_processing():
     print(colored("\nFinal processing...", "blue"))
-    # os.mkdir(campaign_name + "/Results")
+    os.mkdir(campaign_name + "/Results")
     process_subfolder("full", ordered_services)
     if get_test_single_components():
         for s in ordered_services:
@@ -140,28 +142,27 @@ def test():
 
 # test()
 
-ordered_services = workflow_analyzer()  # contains only the service name with input and output buckets, and they are ordered
+ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
 show_workflow(ordered_services)
 
-base, runs, nodes = run_scheduler()  # base is
+base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
 show_runs(base, nodes, repetitions)
 
-# todo if folder already exists, ask to replace
-
-final_processing()
-quit()
+if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
+    show_error("Folder exists. Exiting.")
+    quit()
 
 os.mkdir(campaign_name)
 os.system("cp input.yaml " + campaign_name + "/input.yaml")
 
+
 cluster_name = get_cluster_name()
-# todo just set def cluster before execution of whole script, then check all OSCAR commands
+# todo all oscar command should specify on which cluster to execute
 
 for run in runs:
     print(colored("\nStarting " + run["id"], "blue"))
-    working_dir = os.path.join(campaign_name, run["id"])
-    os.mkdir(working_dir)
+    os.mkdir(os.path.join(campaign_name, run["id"]))  # creates the working directory
 
     prepare_cluster()
     start_run_full()

@@ -133,7 +133,7 @@ def var_process(x, i, cont):
 
 
 # starting from the input file it creates a sequence of run that the script will then cycle on
-# "base" is a basic skeleton list of runs (if a run must be repeated twice it shows only once in base)
+# "base" is a basic skeleton list of runs (if a run must be repeated twice, it shows only once in base)
 # "runs" is the full list of runs, including repetitions (implemented to add state saving later on)
 # "nodes" is just the number of nodes
 def run_scheduler():
@@ -142,7 +142,8 @@ def run_scheduler():
         repetitions = script_config["run"]["repetitions"]
         parallelism = script_config["run"]["parallelism"]
 
-        if not isinstance(parallelism, type(None)):  # if parallelism field is not empty it overrides
+        # if parallelism field is not empty it overrides the other fields
+        if not isinstance(parallelism, type(None)):
             base = run_scheduler_parallel(parallelism, script_config["services"])
             runs = []
             j = 1
