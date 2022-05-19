@@ -223,6 +223,7 @@ def get_possible_parallelisms(total_nodes, max_cores):
 
 
 # alternative to run_scheduler that generates the list of runs automatically based on the parallelism array
+# todo add the possibility for a service to ignore the parallelism field
 def run_scheduler_parallel(parallelism, services):
     total_nodes, max_cores, max_memory_mb = get_worker_nodes_info()
     possible_parallelism = get_possible_parallelisms(total_nodes, max_cores)

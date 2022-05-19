@@ -1,2 +1,3 @@
 https://github.com/grycap/oscar-cli
 https://min.io/download#/linux
+https://github.com/a-MLLibrary/a-MLLibrary

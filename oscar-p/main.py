@@ -149,6 +149,7 @@ base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
 show_runs(base, nodes, repetitions)
 
+campaign_name = "runs-results/" + campaign_name
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
     show_error("Folder exists. Exiting.")

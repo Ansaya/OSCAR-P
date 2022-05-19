@@ -80,7 +80,6 @@ def get_timed_jobs_list(service, client):
 
 
 # retrieve the content of the log of a given job
-# todo change bash_script_start and end to equivalent lines
 def get_oscar_log(service_name, job_name):
     command = "oscar-p/oscar-cli service logs get " + service_name + " " + job_name
     output = get_command_output_wrapped(command)
@@ -91,11 +90,13 @@ def get_oscar_log(service_name, job_name):
 
     with open(run_name + "/logs_oscar/" + job_name + ".txt", "w") as file:
         for line in output:
-            if "#bash_script_start" in line:
+            # nanoseconds after finding the script it is executed
+            if "Script file found in '/oscar/config/script.sh'" in line:
                 bash_script_start = line.split(": ")[1].replace("\n", "")
                 bash_script_start = datetime.strptime(bash_script_start, date_format_precise) \
                                     + timedelta(hours=time_correction)
-            if "#bash_script_end" in line:
+            # this happens immediately after the bash script exits
+            if "Searching for files to upload in folder" in line:
                 bash_script_end = line.split(": ")[1].replace("\n", "")
                 bash_script_end = datetime.strptime(bash_script_end, date_format_precise) \
                                   + timedelta(hours=time_correction)

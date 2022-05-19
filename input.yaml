@@ -1,9 +1,19 @@
 configuration:
   services:
+    - ffmpeg0:
+        cpu: 4.0
+        memory_mb: 1024
+        image: linuxserver/ffmpeg:amd64-version-4.4-cli
+        script: bash-scripts/ffmpeg0.sh
+        input_bucket: input-video
+        output_buckets:
+          - path: input-audio
+            prefix: [ ]
+            suffix: [ ]
     - ffmpeg2:
         cpu: 1.0
         memory_mb: 1024
-        image: linuxserver/ffmpeg
+        image: linuxserver/ffmpeg:amd64-version-4.4-cli
         script: bash-scripts/ffmpeg2.sh
         input_bucket: input-audio
         output_buckets:
@@ -32,7 +42,7 @@ configuration:
     max_memory_mb: 8192
   input_files:
     mc_alias: "minio-vm"
-    filename: "audio4.wav"
+    filename: "test_charlie.mp4"
     number_of_files: 1
     distribution: deterministic
     inter_upload_time: 0
@@ -41,7 +51,7 @@ configuration:
     description: ""
     repetitions: 1
     cooldown_time: 30
-    parallelism: [ 32 ]
+    parallelism: [ 1 ]
   other:
     time_correction: 2
     test_single_components: False

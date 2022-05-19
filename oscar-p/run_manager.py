@@ -108,7 +108,7 @@ def wait_services_completion(services):
                     if j["status"] != "Succeeded":
                         completed = False
                     if j["status"] == "Failed":
-                        show_error("Job " + j["name"] + " failed.")
+                        show_error("Job " + j["name"] + " failed")
                         completed = False
                         quit()
             if not completed:

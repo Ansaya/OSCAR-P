@@ -1,8 +1,22 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '0.9'
-      image: linuxserver/ffmpeg
+      cpu: '3.9'
+      image: linuxserver/ffmpeg:amd64-version-4.4-cli
+      input:
+      - path: input-video
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: ffmpeg0
+      output:
+      - path: input-audio
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/ffmpeg0.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
       - path: input-audio
         storage_provider: minio.default
@@ -15,7 +29,7 @@ functions:
         suffix: []
       script: bash-scripts/ffmpeg2.sh
   - oscar-vm:
-      cpu: '0.9'
+      cpu: '3.9'
       image: scrapjack/deepspeech:stable
       input:
       - path: output-audio
