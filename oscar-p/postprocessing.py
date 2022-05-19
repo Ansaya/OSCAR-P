@@ -6,6 +6,7 @@ import os
 
 import plotly.express as px
 import pandas as pd
+import numpy as np
 
 
 # returns the time of the creation of the first job in a given timelist
@@ -76,7 +77,7 @@ def calculate_parallelism(cores, max_cores, memory, max_memory, nodes):
 
 
 # by checking the resources of every service in a run, it returns the parallelism of the "most parallel" service
-# todo for now considers only cores
+# todo for now it considers only cores
 def calculate_maximum_parallelism(run):
     from input_file_processing import get_worker_nodes_info
     _, max_cores, max_memory = get_worker_nodes_info()
@@ -85,13 +86,16 @@ def calculate_maximum_parallelism(run):
 
     for s in run["services"]:
         service_cores = float(s["cpu"])
-        if service_cores < smallest_core:  # the smaller the number of cores used by service, the greater the parallelism
+        # the smaller the number of cores used by service, the greater the parallelism level
+        if service_cores < smallest_core:
             smallest_core = service_cores
 
     return calculate_parallelism(smallest_core, max_cores, 0, 0, run["nodes"])
 
 
-# todo explain
+# outputs 2 runtime/parallelism dataframes
+# the first contains every run (including repetitions) and its used both for the graph and for the CSV
+# the second one instead averages the repeated runs, and its used only for the graph
 def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
 
     runtimes = []
@@ -118,7 +122,7 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
         averaged_runtimes.append(average_runtime)
         averaged_parallelism.append(calculate_maximum_parallelism(runs[i]))
 
-    # this one is for the CSV
+    # this one is both for the CSV and for the graph
     data = {
         "runtime": runtimes,
         "parallelism": parallelism,
@@ -131,9 +135,11 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
         "parallelism": averaged_parallelism
     }
 
+    # dataframe
     df = pd.DataFrame(data=data)
     df.sort_values(by=['parallelism'], inplace=True)
 
+    # averaged_dataframe
     adf = pd.DataFrame(data=averaged_data)
     adf.sort_values(by=['parallelism'], inplace=True)
 
@@ -142,21 +148,22 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
 
 def plot_runtime_core_graph(campaign_name, subfolder, data, averaged_data):
     df = pd.DataFrame(data)
-    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=campaign_name + "_" + subfolder, labels={"x": "Cores", "y": "Runtime (seconds)"})
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=campaign_name + "_" + subfolder,
+                     labels={"x": "Cores", "y": "Runtime (seconds)"})
     fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
     fig.write_image(campaign_name + "/Results/" + "runtime_core_" + subfolder + ".png")
 
 
 def make_runtime_core_csv(campaign_name, subfolder, data):
     filename = campaign_name + "/Results/" + "runtime_core_" + subfolder + ".csv"
-    header = "runtime,cores,log(cores),number_of_videos\n"
+    header = "runtime,cores,log(cores)\n"
     with open(filename, "w") as file:
         file.write(header)
         for i in range(len(data)):
             core = data["parallelism"][i]
             log_core = round(math.log10(int(core)), 5)
             runtime = data["runtime"][i]
-            file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "," + "10" + "\n")
+            file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
     # print("Done!")
     return
 
@@ -195,3 +202,44 @@ def merge_csv_of_service(campaign_name, service_name):
 
     return
 
+
+def make_statistics(data, session_name):
+    n = len(data)
+
+    data_matrix = np.zeros((n, 12))
+
+    for i in range(n):
+        job = data[i]
+        data_matrix[i, 0] += job[11]  # full_time_total
+        data_matrix[i, 1] += job[12]  # wait_total
+        data_matrix[i, 2] += job[13]  # pod_creation_total
+        data_matrix[i, 3] += job[14]  # overhead_total
+        data_matrix[i, 4] += job[15]  # compute_total
+        data_matrix[i, 5] += job[16]  # compute_overhead
+        data_matrix[i, 6] += job[17]  # yolo_load
+        data_matrix[i, 7] += job[18]  # image_read
+        data_matrix[i, 8] += job[19]  # yolo_compute
+        data_matrix[i, 9] += job[20]  # process_results
+        data_matrix[i, 10] += job[21]  # image_write
+        data_matrix[i, 11] += job[22]  # write_back
+
+    total = np.sum(data_matrix, axis=0)
+    mean = total / n
+    variance = np.square(data_matrix - mean)
+    variance = np.sum(variance, axis=0) / n
+    sigma = np.sqrt(variance)  # population standard deviation
+    coeff_of_variation = sigma / mean
+
+    headers = ["full_job:", "wait:", "pod_creation:", "overhead:", "compute_total:", "compute_overhead:", "yolo_load:",
+               "image_read:", "yolo_compute:", "process_results:", "image_write:", "write_back:"]
+
+    with open("results/" + session_name + "/mask_statistics.txt", "w") as file:
+        for i in range(len(headers)):
+            file.write(headers[i])
+            file.write("\n\ttotal: " + str(round(total[i], 3)))
+            file.write("\n\tmean: " + str(round(mean[i], 3)))
+            file.write("\n\tpop. standard deviation: " + str(round(sigma[i], 3)))
+            file.write("\n\tcoefficient of variation: " + str(round(coeff_of_variation[i], 3)))
+            file.write("\n")
+
+    return

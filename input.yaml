@@ -33,7 +33,7 @@ configuration:
   input_files:
     mc_alias: "minio-vm"
     filename: "Test-Video.mp4"
-    number_of_files: 1
+    number_of_files: 10
     distribution: deterministic
     inter_upload_time: 0
   run:
@@ -41,9 +41,9 @@ configuration:
     description: ""
     repetitions: 1
     cooldown_time: 30
-    parallelism: [32]
+    parallelism: [ 32 ]
   other:
-    time_correction: 1
+    time_correction: 2
     test_single_components: False
-    debug: True
+    debug: False
  

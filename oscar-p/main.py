@@ -90,9 +90,9 @@ def final_processing():
 
 
 def process_subfolder(subfolder, services):
-    data, averaged_data = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
-    plot_runtime_core_graph(campaign_name, subfolder, data, averaged_data)
-    make_runtime_core_csv(campaign_name, subfolder, data)
+    df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
+    plot_runtime_core_graph(campaign_name, subfolder, df, adf)
+    make_runtime_core_csv(campaign_name, subfolder, df)
 
 
 def run_mllibrary():
@@ -105,14 +105,14 @@ def run_mllibrary():
             filepath = base_dir + r
 
             # with SFS
-            config_file = "MLlibrary-config-SFS.ini"
+            config_file = "MLlibrary/MLlibrary-config-SFS.ini"
             set_mllibrary_config_path(config_file, filepath)
             output_dir = base_dir + r.strip(".csv") + "_model_SFS"
             sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
             sequence_data_processor.process()
 
             # without SFS
-            config_file = "MLlibrary-config-noSFS.ini"
+            config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
             set_mllibrary_config_path(config_file, filepath)
             output_dir = base_dir + r.strip(".csv") + "_model_noSFS"
             sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
@@ -148,6 +148,8 @@ show_workflow(ordered_services)
 base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
 show_runs(base, nodes, repetitions)
+
+
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
     show_error("Folder exists. Exiting.")

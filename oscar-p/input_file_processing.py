@@ -8,7 +8,7 @@ from utils import get_valid_input, show_warning, show_error
 
 
 # receives the list of services, we should only have one empty "father" field (the first service)
-# returns True if workflow is consisten, False otherwise
+# returns True if workflow is consistent, False otherwise
 def consistency_check(services):
     root_found = False  # root being the node with "father" field empty
 
@@ -341,6 +341,12 @@ def get_worker_nodes_info():
     with open("input.yaml", "r") as file:
         i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["worker_nodes"]
         return i["total_nodes"], i["max_cpu_cores"], i["max_memory_mb"]
+
+
+def get_time_correction():
+    with open("input.yaml", "r") as file:
+        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["other"]
+        return i["time_correction"]
 
 
 def get_test_single_components():

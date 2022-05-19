@@ -167,6 +167,7 @@ def get_node_list(client):
         else:
             node_status = "on"
 
+        # doesn't include master node
         if "master" not in node_role:
             node_list.append({
                 "name": node_name,
@@ -195,5 +196,4 @@ def apply_cluster_configuration(run):
     show_debug_info(make_debug_info(["Cluster configuration AFTER:"] + get_node_list(client)))
 
     print(colored("Done!", "green"))
-    quit()
     return
