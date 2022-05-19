@@ -2,29 +2,29 @@ functions:
   oscar:
   - oscar-vm:
       cpu: '0.9'
-      image: scrapjack/blurry-faces-modded:stable
+      image: linuxserver/ffmpeg
       input:
-      - path: input-videos
+      - path: input-audio
         storage_provider: minio.default
       memory: 1024Mi
-      name: blur-faces
+      name: ffmpeg2
       output:
-      - path: blurred-images
+      - path: output-audio
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: bash-scripts/blurry-faces.sh
+      script: bash-scripts/ffmpeg2.sh
   - oscar-vm:
       cpu: '0.9'
-      image: scrapjack/mask-detector-modded:stable
+      image: scrapjack/deepspeech:stable
       input:
-      - path: blurred-images
+      - path: output-audio
         storage_provider: minio.default
       memory: 1024Mi
-      name: mask-detector
+      name: deepspeech
       output:
-      - path: results
+      - path: output-text
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: bash-scripts/mask-detector.sh
+      script: bash-scripts/deepspeech.sh

@@ -6,7 +6,7 @@ import numpy as np
 from termcolor import colored
 
 from input_file_processing import get_mc_alias
-from utils import execute_command, get_command_output_wrapped
+from utils import execute_command, get_command_output_wrapped, show_error
 
 
 # wait between the upload of two files, to emulate arrival rate
@@ -107,11 +107,10 @@ def wait_services_completion(services):
                 for j in job_list:
                     if j["status"] != "Succeeded":
                         completed = False
-                        break
                     if j["status"] == "Failed":
-                        print(colored("Warning, a job failed", "red"))
+                        show_error("Job " + j["name"] + " failed.")
                         completed = False
-                        break
+                        quit()
             if not completed:
                 time.sleep(increment_sleep(sleep_interval))
         print(colored("Service " + service_name + " completed!", "green"))
