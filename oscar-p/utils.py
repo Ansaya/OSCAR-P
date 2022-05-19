@@ -60,7 +60,12 @@ def show_error(message):
     print(colored("\nError: " + message, "red"))
 
 
-# GUI utils
+def show_debug_info(message):
+    from input_file_processing import get_debug
+
+    if get_debug():
+        print(colored("\nInfo: " + message, "cyan"))
+
 
 def get_valid_input(message, allowed_values):
     value = input("\n" + message)
@@ -101,3 +106,25 @@ def get_ssh_output(client, command):
     stdout.close()
     stderr.close()
     return lines
+
+
+# OTHER UTILS
+
+def dict_to_string(input_dict):
+    return json.dumps(input_dict)
+
+
+def make_debug_info(raw_list):
+    # print(raw_list)
+    output_line = ""
+
+    for r in raw_list:
+        if isinstance(r, str):
+            output_line += r + "\n"
+        elif isinstance(r, dict):
+            output_line += dict_to_string(r) + "\n"
+        else:
+            show_error("Whoopsie, unexpected type")
+
+    # print(output_line)
+    return output_line

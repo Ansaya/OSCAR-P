@@ -9,7 +9,7 @@ from utils import get_valid_input, show_warning, show_error
 
 # receives the list of services, we should only have one empty "father" field (the first service)
 # returns True if workflow is consisten, False otherwise
-def consinstency_check(services):
+def consistency_check(services):
     root_found = False  # root being the node with "father" field empty
 
     for service in services:
@@ -97,7 +97,7 @@ def workflow_analyzer():
                     t["children"].append(s["name"])
 
     # and checks if the workflow is consistent
-    if not consinstency_check(services):  # if returns False, hence not consistent
+    if not consistency_check(services):  # if returns False, hence not consistent
         show_error("Workflow inconsistent")
         quit()
 
@@ -347,3 +347,9 @@ def get_test_single_components():
     with open("input.yaml", "r") as file:
         i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["other"]
         return i["test_single_components"]
+
+
+def get_debug():
+    with open("input.yaml", "r") as file:
+        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["other"]
+        return i["debug"]

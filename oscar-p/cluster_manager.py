@@ -3,8 +3,9 @@
 import yaml
 
 from termcolor import colored
-from input_file_processing import get_mc_alias
-from utils import execute_command, configure_ssh_client, get_ssh_output, get_command_output_wrapped
+from input_file_processing import get_mc_alias, get_debug
+from utils import execute_command, configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
+    make_debug_info
 
 
 def remove_all_services():
@@ -148,7 +149,8 @@ def apply_fdl_configuration():
     return
 
 
-# returns a list of nodes with status = off if cordoned or on otherwise, doesn't return master nodes
+# returns a list of nodes, with status = off if cordoned or on otherwise
+# doesn't return master nodes
 def get_node_list(client):
     lines = get_ssh_output(client, "sudo kubectl get nodes")
 
@@ -165,7 +167,7 @@ def get_node_list(client):
         else:
             node_status = "on"
 
-        if not node_role == "master":
+        if "master" not in node_role:
             node_list.append({
                 "name": node_name,
                 "status": node_status,
@@ -181,6 +183,8 @@ def apply_cluster_configuration(run):
     node_list = get_node_list(client)
     requested_number_of_nodes = run["nodes"]
 
+    show_debug_info(make_debug_info(["Cluster configuration BEFORE:"] + node_list))
+
     for i in range(1, len(node_list) + 1):
         node = node_list[i - 1]
         if i <= requested_number_of_nodes and node["status"] == "off":
@@ -188,5 +192,8 @@ def apply_cluster_configuration(run):
         if i > requested_number_of_nodes and node["status"] == "on":
             get_ssh_output(client, "sudo kubectl cordon " + node["name"])
 
+    show_debug_info(make_debug_info(["Cluster configuration AFTER:"] + get_node_list(client)))
+
     print(colored("Done!", "green"))
+    quit()
     return

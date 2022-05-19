@@ -41,8 +41,9 @@ configuration:
     description: ""
     repetitions: 1
     cooldown_time: 30
-    parallelism: [24, 28, 32]
+    parallelism: [32]
   other:
     time_correction: 1
     test_single_components: False
+    debug: True
  
