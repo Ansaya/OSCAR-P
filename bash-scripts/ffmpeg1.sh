@@ -2,7 +2,7 @@
 
 INPUT_FILE=`basename "$INPUT_FILE_PATH"`
 
-# decompress tar archive, containing timestamps.txt and a video file
+tar -xvzf "$INPUT_FILE_PATH"
 
 filename='timestamps.txt'
 n=0
