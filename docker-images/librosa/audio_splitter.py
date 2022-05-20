@@ -1,13 +1,14 @@
 import librosa
-import soundfile as sf
+import sys
 
+audio_file = sys.argv[1]
+threshold_db = sys.argv[2]
+print(audio_file)
+audio, sr = librosa.load(audio_file, sr=22050, mono=True)
 
-audio_file = r'output.wav'
-audio, sr = librosa.load(audio_file, sr= 22050, mono=True)
+clips = librosa.effects.split(audio, top_db=threshold_db)  # change threshold to parameter
 
-clips = librosa.effects.split(audio, top_db=10)
-
-for i in range(len(clips)):
-    c = clips[i]
-    data = audio[c[0]: c[1]]
-    sf.write(str(i) + ".wav", data, sr)
+with open("timestamps.txt", "a") as file:
+    for i in range(len(clips)):
+        c = clips[i]
+        file.write(str(c[0]) + " " + str(c[1]) + "\n")

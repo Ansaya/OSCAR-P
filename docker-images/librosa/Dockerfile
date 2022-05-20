@@ -1,9 +1,14 @@
 FROM python:3.7.12-slim-buster
 
-RUN pip install deepspeech && \
+RUN apt update && \
+    apt install -y --no-install-recommends libsndfile1 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install SoundFile && \
+    pip install librosa && \
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 
-COPY deepspeech-0.9.3-models.pbmm deepspeech-0.9.3-models.pbmm
-COPY deepspeech-0.9.3-models.scorer deepspeech-0.9.3-models.scorer
+COPY audio_splitter.py .
 

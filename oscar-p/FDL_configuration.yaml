@@ -16,6 +16,20 @@ functions:
       script: bash-scripts/ffmpeg0.sh
   - oscar-vm:
       cpu: '3.9'
+      image: scrapjack/librosa:latest
+      input:
+      - path: input-audio
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: librosa
+      output:
+      - path: trash
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/librosa.sh
+  - oscar-vm:
+      cpu: '3.9'
       image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
       - path: input-audio

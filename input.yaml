@@ -10,6 +10,16 @@ configuration:
           - path: input-audio
             prefix: [ ]
             suffix: [ ]
+    - librosa:
+        cpu: 4.0
+        memory_mb: 1024
+        image: scrapjack/librosa:latest
+        script: bash-scripts/librosa.sh
+        input_bucket: input-audio
+        output_buckets:
+          - path: trash
+            prefix: [ ]
+            suffix: [ ]
     - ffmpeg2:
         cpu: 1.0
         memory_mb: 1024
