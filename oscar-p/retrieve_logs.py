@@ -84,7 +84,8 @@ def get_oscar_log(service_name, job_name):
     command = "oscar-p/oscar-cli service logs get " + service_name + " " + job_name
     output = get_command_output_wrapped(command)
 
-    date_format_precise = "%d-%m-%Y %H:%M:%S.%f"
+    # date_format_precise = "%d-%m-%Y %H:%M:%S.%f"
+    date_format_precise = "%Y-%m-%d %H:%M:%S,%f"
 
     time_correction = get_time_correction()
 
@@ -92,12 +93,14 @@ def get_oscar_log(service_name, job_name):
         for line in output:
             # nanoseconds after finding the script it is executed
             if "Script file found in '/oscar/config/script.sh'" in line:
-                bash_script_start = line.split(": ")[1].replace("\n", "")
+                # bash_script_start = line.split(" ")[1].replace("\n", "")
+                bash_script_start = line.split(" - ")[0]
+                # print(bash_script_start)
                 bash_script_start = datetime.strptime(bash_script_start, date_format_precise) \
                                     + timedelta(hours=time_correction)
             # this happens immediately after the bash script exits
             if "Searching for files to upload in folder" in line:
-                bash_script_end = line.split(": ")[1].replace("\n", "")
+                bash_script_end = line.split(" - ")[0]
                 bash_script_end = datetime.strptime(bash_script_end, date_format_precise) \
                                   + timedelta(hours=time_correction)
             file.write(line)

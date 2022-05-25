@@ -203,6 +203,7 @@ def merge_csv_of_service(campaign_name, service_name):
     return
 
 
+# todo modify this method and use it
 def make_statistics(data, session_name):
     n = len(data)
 

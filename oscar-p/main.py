@@ -2,7 +2,6 @@
 # tried to keep it as slim as possible for easier reading (failed miserably)
 
 import os
-import configparser
 
 from termcolor import colored
 
@@ -16,8 +15,7 @@ from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
 from utils import show_error
-
-from MLlibrary import sequence_data_processing
+from mllibrary_manager import run_mllibrary
 
 
 def prepare_cluster():
@@ -86,7 +84,7 @@ def final_processing():
             process_subfolder(s["name"], [s])
             merge_csv_of_service(campaign_name, s["name"])
     print(colored("Done!", "green"))
-    # run_mllibrary()
+    run_mllibrary(campaign_name)
 
 
 def process_subfolder(subfolder, services):
@@ -95,66 +93,7 @@ def process_subfolder(subfolder, services):
     make_runtime_core_csv(campaign_name, subfolder, df)
 
 
-# todo this should be moved to postprocessing
-def run_mllibrary():
-    print(colored("\nGenerating models...", "blue"))
-    base_dir = campaign_name + "/Results/"
-
-    results = os.listdir(base_dir)
-    for r in results:
-        if ".csv" in r and "runtime" in r:
-            filepath = base_dir + r
-
-            # with SFS
-            """
-            config_file = "MLlibrary/MLlibrary-config-SFS.ini"
-            set_mllibrary_config_path(config_file, filepath)
-            output_dir = base_dir + r.strip(".csv") + "_model_SFS"
-            sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
-            sequence_data_processor.process()
-            """
-
-            # without SFS
-            config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
-            set_mllibrary_config_path(config_file, filepath)
-            output_dir = base_dir + r.strip(".csv") + "_model_noSFS"
-            sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
-            sequence_data_processor.process()
-    print(colored("Done!", "green"))
-
-
-def set_values_to_interpolate(config_file):
-    parser = configparser.ConfigParser()
-    parser.read(config_file)
-
-    parser.set("General", "interpolation_columns", "[8]")
-
-    with open(config_file, "w") as file:
-        parser.write(file)
-    return
-
-
-def set_values_to_extrapolate():
-    return
-
-
-def set_mllibrary_config_path(config_file, filepath):
-    parser = configparser.ConfigParser()
-    parser.read(config_file)
-
-    parser.set("DataPreparation", "input_path", filepath)
-
-    with open(config_file, "w") as file:
-        parser.write(file)
-
-
 def test():
-    config_file = "MLlibrary-config-SFS.ini"
-    filepath = "full-test/Results/runtime_core_mask-detector.csv"
-    set_mllibrary_config_path(config_file, filepath)
-    output_dir = "full-test/Results/runtime_core_mask-detector_model_xx"
-    sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
-    sequence_data_processor.process()
     quit()
 
 
@@ -169,6 +108,9 @@ show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
+run_mllibrary(campaign_name)
+quit()
+
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
     show_error("Folder exists. Exiting.")
     quit()
@@ -181,7 +123,7 @@ cluster_name = get_cluster_name()
 # todo all oscar command should specify on which cluster to execute
 
 for run in runs:
-    print(colored("\nStarting " + run["id"], "blue"))
+    print(colored("\nStarting " + run["id"], "blue"))  # todo might be nice to say 6 out of 30 for example
     os.mkdir(os.path.join(campaign_name, run["id"]))  # creates the working directory
 
     prepare_cluster()
