@@ -86,7 +86,7 @@ def final_processing():
             # merge_csv_of_service(campaign_name, s["name"])
 
     print(colored("Done!", "green"))
-    # run_mllibrary(campaign_name)
+    run_mllibrary(campaign_name + "/Results")
 
 
 def process_subfolder(subfolder, services):

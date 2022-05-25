@@ -9,7 +9,9 @@ from MLlibrary.model_building.predictor import Predictor
 
 def run_mllibrary(campaign_name):
     print(colored("\nGenerating models...", "blue"))
-    base_dir = campaign_name + "/Results/"
+    base_dir = campaign_name + "/CSVs/"
+    campaign_name += "/Models/"
+    os.mkdir(campaign_name)
 
     results = os.listdir(base_dir)
     for r in results:
@@ -18,8 +20,8 @@ def run_mllibrary(campaign_name):
 
             # with SFS
             config_file = "MLlibrary/MLlibrary-config-SFS.ini"
-            output_dir = base_dir + r.strip(".csv") + "_model_SFS"
-            # train_models(config_file, filepath, output_dir)
+            output_dir = campaign_name + r.strip(".csv") + "_model_SFS"
+            train_models(config_file, filepath, output_dir)
 
             # without SFS
             config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
@@ -29,7 +31,7 @@ def run_mllibrary(campaign_name):
             # prediction
             config_file = "MLlibrary/MLlibrary-predict.ini"
             # set_mllibrary_predict_path(config_file, filepath)
-            make_prediction(config_file, output_dir)
+            # make_prediction(config_file, output_dir)
     print(colored("Done!", "green"))
 
 
