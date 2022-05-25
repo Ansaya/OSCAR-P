@@ -1,15 +1,19 @@
 #!/bin/bash
 
+#INPUT_FILE_PATH="./test_charlie_0.tar.gz"
 INPUT_FILE=`basename "$INPUT_FILE_PATH"`
+
+echo $INPUT_FILE_PATH
 
 tar -xvzf "$INPUT_FILE_PATH"
 
 filename='timestamps.txt'
 n=0
 while read line; do
-n=$((n+1))
-array=($line)
-echo ${array[0]}
-echo ${array[1]}
-ffmpeg -ss ${array[0]} -to ${array[1]} -i $INPUT_FILE -c copy "${INPUT_FILE%.mp4}$n.mp4"
+  n=$((n+1))
+  echo "$n"
+  echo "$line"
+  start=${line% *}
+  end=${line#* }
+  ffmpeg -ss $start -to $end -i "${INPUT_FILE%.tar.gz}.mp4" -c copy "$TMP_OUTPUT_DIR/${INPUT_FILE%.tar.gz}$n.mp4"
 done < $filename

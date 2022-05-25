@@ -95,6 +95,7 @@ def process_subfolder(subfolder, services):
     make_runtime_core_csv(campaign_name, subfolder, df)
 
 
+# todo this should be moved to postprocessing
 def run_mllibrary():
     print(colored("\nGenerating models...", "blue"))
     base_dir = campaign_name + "/Results/"
@@ -105,11 +106,13 @@ def run_mllibrary():
             filepath = base_dir + r
 
             # with SFS
+            """
             config_file = "MLlibrary/MLlibrary-config-SFS.ini"
             set_mllibrary_config_path(config_file, filepath)
             output_dir = base_dir + r.strip(".csv") + "_model_SFS"
             sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
             sequence_data_processor.process()
+            """
 
             # without SFS
             config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
@@ -118,6 +121,21 @@ def run_mllibrary():
             sequence_data_processor = sequence_data_processing.SequenceDataProcessing(config_file, output=output_dir)
             sequence_data_processor.process()
     print(colored("Done!", "green"))
+
+
+def set_values_to_interpolate(config_file):
+    parser = configparser.ConfigParser()
+    parser.read(config_file)
+
+    parser.set("General", "interpolation_columns", "[8]")
+
+    with open(config_file, "w") as file:
+        parser.write(file)
+    return
+
+
+def set_values_to_extrapolate():
+    return
 
 
 def set_mllibrary_config_path(config_file, filepath):
