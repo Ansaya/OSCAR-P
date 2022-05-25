@@ -147,15 +147,21 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
 
 
 def plot_runtime_core_graph(campaign_name, subfolder, data, averaged_data):
+    campaign_name += "/Graphs/"
+    if not os.path.exists(campaign_name):
+        os.mkdir(campaign_name)
     df = pd.DataFrame(data)
     fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=campaign_name + "_" + subfolder,
                      labels={"x": "Cores", "y": "Runtime (seconds)"})
     fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
-    fig.write_image(campaign_name + "/Results/" + "runtime_core_" + subfolder + ".png")
+    fig.write_image(campaign_name + "runtime_core_" + subfolder + ".png")
 
 
 def make_runtime_core_csv(campaign_name, subfolder, data):
-    filename = campaign_name + "/Results/" + "runtime_core_" + subfolder + ".csv"
+    campaign_name += "/CSVs/"
+    if not os.path.exists(campaign_name):
+        os.mkdir(campaign_name)
+    filename = campaign_name + "runtime_core_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
     with open(filename, "w") as file:
         file.write(header)

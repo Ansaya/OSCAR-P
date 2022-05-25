@@ -28,7 +28,7 @@ def run_mllibrary(campaign_name):
 
             # prediction
             config_file = "MLlibrary/MLlibrary-predict.ini"
-            set_mllibrary_predict_path(config_file, filepath)
+            # set_mllibrary_predict_path(config_file, filepath)
             make_prediction(config_file, output_dir)
     print(colored("Done!", "green"))
 

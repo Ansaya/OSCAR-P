@@ -79,18 +79,20 @@ def final_processing():
     print(colored("\nFinal processing...", "blue"))
     os.mkdir(campaign_name + "/Results")
     process_subfolder("full", ordered_services)
+
     if get_test_single_components():
         for s in ordered_services:
             process_subfolder(s["name"], [s])
-            merge_csv_of_service(campaign_name, s["name"])
+            # merge_csv_of_service(campaign_name, s["name"])
+
     print(colored("Done!", "green"))
-    run_mllibrary(campaign_name)
+    # run_mllibrary(campaign_name)
 
 
 def process_subfolder(subfolder, services):
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
-    plot_runtime_core_graph(campaign_name, subfolder, df, adf)
-    make_runtime_core_csv(campaign_name, subfolder, df)
+    plot_runtime_core_graph(campaign_name + "/Results", subfolder, df, adf)
+    make_runtime_core_csv(campaign_name + "/Results", subfolder, df)
 
 
 def test():
@@ -108,7 +110,8 @@ show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
-run_mllibrary(campaign_name)
+final_processing()
+# run_mllibrary(campaign_name)
 quit()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
