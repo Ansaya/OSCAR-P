@@ -202,14 +202,12 @@ def plot_ml_predictions_graphs(results_dir, services):
         plot_ml_predictions_graph(graphs_dir, s, interpolation_test_values, interpolation, df, adf, "interpolation")
         plot_ml_predictions_graph(graphs_dir, s, extrapolation_test_values, extrapolation, df, adf, "extrapolation")
 
-        quit()
-
 
 def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df, adf, operation):
     if subfolder == "full":
-        title = "Full workflow - " + dictionary["best_model"] + " - " + dictionary["mape"]
+        title = "Full workflow - " + dictionary["best_model"] + " - MAPE " + dictionary["mape"]
     else:
-        title = subfolder + " - " + dictionary["best_model"] + " - " + dictionary["mape"]
+        title = subfolder + " - " + dictionary["best_model"] + " - MAPE " + dictionary["mape"]
     fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title, template="simple_white",
                      labels={"parallelism": "Parallelism", "runtime": "Runtime (seconds)", "runs": "Runs"})
     fig.add_scatter(x=adf["parallelism"], y=adf["runtime"], name="Average", mode="lines")
@@ -258,7 +256,7 @@ def find_best_prediction(workdir, summary_path):
 
     best_model = best_model_path.split("_")[-1]
     if "noSFS" in best_model_path:
-        best_model += " (noSFS)"
+        best_model += " (no SFS)"
     else:
         best_model += " (SFS)"
 
