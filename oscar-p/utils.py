@@ -1,5 +1,5 @@
 # collection of utils for CLI, GUI and SSH
-
+import os
 import subprocess
 import time
 import json
@@ -106,6 +106,19 @@ def get_ssh_output(client, command):
     stdout.close()
     stderr.close()
     return lines
+
+
+# FILE UTILS
+
+def list_of_strings_to_file(list_of_strings, filepath):
+    with open(filepath, "w") as file:
+        for s in list_of_strings:
+            file.write(s + "\n")
+
+
+def auto_mkdir(new_dir):
+    if not os.path.exists(new_dir):
+        os.mkdir(new_dir)
 
 
 # OTHER UTILS

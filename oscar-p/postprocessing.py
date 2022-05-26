@@ -8,7 +8,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
-from utils import show_error
+from utils import show_error, list_of_strings_to_file, auto_mkdir
 
 
 # returns the time of the creation of the first job in a given timelist
@@ -152,22 +152,20 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
 
 
 # todo rename graphs
-def plot_runtime_core_graphs(campaign_name, subfolder, data, averaged_data):
-    campaign_name += "/Graphs/"
-    if not os.path.exists(campaign_name):
-        os.mkdir(campaign_name)
+def plot_runtime_core_graphs(results_dir, subfolder, data, averaged_data):
+    graphs_dir = results_dir + "/Graphs/"
+    auto_mkdir(graphs_dir)
     df = pd.DataFrame(data)
-    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=campaign_name + "_" + subfolder,
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=graphs_dir + "_" + subfolder,
                      labels={"x": "Cores", "y": "Runtime (seconds)"})
     fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
-    fig.write_image(campaign_name + "runtime_core_" + subfolder + ".png")
+    fig.write_image(graphs_dir + "runtime_core_" + subfolder + ".png")
 
 
-def make_runtime_core_csv(campaign_name, subfolder, data):
-    campaign_name += "/CSVs/"
-    if not os.path.exists(campaign_name):
-        os.mkdir(campaign_name)
-    filename = campaign_name + "runtime_core_" + subfolder + ".csv"
+def make_runtime_core_csv(results_dir, subfolder, data):
+    csvs_dir = results_dir + "/CSVs/"
+    auto_mkdir(csvs_dir)
+    filename = csvs_dir + "runtime_core_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
     with open(filename, "w") as file:
         file.write(header)
@@ -216,25 +214,52 @@ def load_dataframes(results_dir, subfolder):
     return df, adf
 
 
-def find_best_prediction(results_dir, subfolder):
+def find_best_predictions(results_dir, subfolder):
+    # dir definition
     models_dir = results_dir + "/Models/"
+    summaries_dir = results_dir + "/Summaries/"
+    auto_mkdir(summaries_dir)
     interpolation_dir = models_dir + "Interpolation/"
     extrapolation_dir = models_dir + "Extrapolation/"
     sfs_model = subfolder + "_model_SFS/"
     no_sfs_model = subfolder + "_model_noSFS/"
 
+    # interpolation
+    workdir = [interpolation_dir + sfs_model, interpolation_dir + no_sfs_model]
+    # interpolation = find_best_prediction(workdir, summaries_dir + subfolder + "_interpolation.txt")
+
+    # extrapolation
     workdir = [extrapolation_dir + sfs_model, extrapolation_dir + no_sfs_model]
-    best_model, min_mape, summary = find_best_model(workdir)
-    print(best_model, min_mape)
-    for s in summary:
-        print(s)
+    extrapolation = find_best_prediction(workdir, summaries_dir + subfolder + "_extrapolation.txt")
 
-    # best_model is the full path to the best model
-
-    prediction = pd.read_csv(best_model + "/prediction.csv")
-    print(prediction)
+    print(extrapolation)
 
     return
+
+
+def find_best_prediction(workdir, summary_path):
+    best_model_path, min_mape, summary = find_best_model(workdir)
+
+    list_of_strings_to_file(summary, summary_path)
+
+    prediction_csv = pd.read_csv(best_model_path + "/prediction.csv")
+    prediction_values = []
+    for p in prediction_csv["pred"]:
+        prediction_values.append(round(p, 2))
+
+    best_model = best_model_path.split("_")[-1]
+    if "noSFS" in best_model_path:
+        best_model += " (noSFS)"
+    else:
+        best_model += " (SFS)"
+
+    dictionary = {
+        "best_model": best_model,
+        "mape": str(min_mape) + " %",
+        "values": prediction_values
+    }
+
+    return dictionary
 
 
 def find_best_model(workdir):
@@ -250,14 +275,14 @@ def find_best_model(workdir):
             if "output_predict" in r:
                 with open(w + r + "/mape.txt", "r") as file:
                     mape = float(file.readline())
-                    mape_h = int(mape * 100 * 100) / 100  # human readable, also laziness 101
-                    summary.append("\t" + r.split("_")[2] + " " + str(mape_h))
-                    # print(r, mape)
+                    mape_h = round(mape * 100, 2)  # human readable
+                    summary.append("\t" + r.split("_")[2] + " " + str(mape_h) + " %")
+                    # if current model is better updates values
                     if mape < min_mape:
                         min_mape = mape
                         best_model = w + r
         summary.append("SFS")
-    return best_model, min_mape, summary[:-1]
+    return best_model, round(min_mape * 100, 2), summary[:-1]
 
 
 def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, operation):
@@ -273,8 +298,7 @@ def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, op
     csvs_dir = results_dir + "/CSVs/"
     workdir = csvs_dir + operation + "/"
 
-    if not os.path.exists(workdir):
-        os.mkdir(workdir)
+    auto_mkdir(workdir)
 
     filename_training = workdir + "training_set_" + subfolder + ".csv"
     filename_test = workdir + "test_set_" + subfolder + ".csv"
@@ -322,8 +346,7 @@ def save_dataframes(results_dir, subfolder, df, adf):
 
     dataframe_dir = results_dir + "/Dataframes/"
 
-    if not os.path.exists(dataframe_dir):
-        os.mkdir(dataframe_dir)
+    auto_mkdir(dataframe_dir)
 
     df.to_pickle(dataframe_dir + subfolder + "_data.pickle")
     adf.to_pickle(dataframe_dir + subfolder + "_average_data.pickle")
