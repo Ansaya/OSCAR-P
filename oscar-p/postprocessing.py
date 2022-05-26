@@ -195,23 +195,27 @@ def plot_ml_predictions_graphs(results_dir, services):
         # load the required dataframes
         df, adf = load_dataframes(results_dir, s)
 
-        extrapolation = find_best_predictions(results_dir, s)
+        # gets required info for current subfolder
+        interpolation, extrapolation = find_best_predictions(results_dir, s)
 
-        plot_ml_predictions_graph(graphs_dir, s, extrapolation_test_values, extrapolation, df, adf)
+        # plots interpolation and extrapolation graphs
+        plot_ml_predictions_graph(graphs_dir, s, interpolation_test_values, interpolation, df, adf, "interpolation")
+        plot_ml_predictions_graph(graphs_dir, s, extrapolation_test_values, extrapolation, df, adf, "extrapolation")
 
         quit()
 
 
-def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df, adf):
+def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df, adf, operation):
     if subfolder == "full":
-        subfolder = "Full workflow"
-    title = subfolder + " - " + dictionary["best_model"] + " - " + dictionary["mape"]
-    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title,
-                     labels={"x": "Cores", "y": "Runtime (seconds)"})
+        title = "Full workflow - " + dictionary["best_model"] + " - " + dictionary["mape"]
+    else:
+        title = subfolder + " - " + dictionary["best_model"] + " - " + dictionary["mape"]
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title, template="simple_white",
+                     labels={"parallelism": "Parallelism", "runtime": "Runtime (seconds)", "runs": "Runs"})
     fig.add_scatter(x=adf["parallelism"], y=adf["runtime"], name="Average", mode="lines")
     fig.add_scatter(x=test_values, y=dictionary["values"], name="Prediction", mode="markers",
                     marker=dict(size=10, symbol="x", color="red"))
-    fig.write_image(graphs_dir + "ml_predictions_" + subfolder + ".png")
+    fig.write_image(graphs_dir + "ml_" + operation + "_" + subfolder + ".png")
 
 
 def load_dataframes(results_dir, subfolder):
@@ -232,16 +236,14 @@ def find_best_predictions(results_dir, subfolder):
     no_sfs_model = subfolder + "_model_noSFS/"
 
     # interpolation
-    # workdir = [interpolation_dir + sfs_model, interpolation_dir + no_sfs_model]
-    # interpolation = find_best_prediction(workdir, summaries_dir + subfolder + "_interpolation.txt")
+    workdir = [interpolation_dir + sfs_model, interpolation_dir + no_sfs_model]
+    interpolation = find_best_prediction(workdir, summaries_dir + subfolder + "_interpolation.txt")
 
     # extrapolation
     workdir = [extrapolation_dir + sfs_model, extrapolation_dir + no_sfs_model]
     extrapolation = find_best_prediction(workdir, summaries_dir + subfolder + "_extrapolation.txt")
 
-    print(extrapolation)
-
-    return extrapolation
+    return interpolation, extrapolation
 
 
 def find_best_prediction(workdir, summary_path):
@@ -263,14 +265,14 @@ def find_best_prediction(workdir, summary_path):
     dictionary = {
         "best_model": best_model,
         "mape": str(min_mape) + " %",
-        "values": prediction_values
+        "values": prediction_values,
     }
 
     return dictionary
 
 
 def find_best_model(workdir):
-    min_mape = 1
+    min_mape = 10
     best_model = ""
 
     summary = ["noSFS"]

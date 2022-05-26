@@ -3,6 +3,8 @@ import configparser
 
 from termcolor import colored
 
+from utils import auto_mkdir
+
 from MLlibrary import sequence_data_processing
 from MLlibrary.model_building.predictor import Predictor
 
@@ -13,11 +15,11 @@ def run_mllibrary(results_dir):
     interpolation_csvs_dir = csvs_dir + "/Interpolation/"
     extrapolation_csvs_dir = csvs_dir + "/Extrapolation/"
     models_dir = results_dir + "/Models/"
-    os.mkdir(models_dir)
+    auto_mkdir(models_dir)
     interpolation_models_dir = models_dir + "Interpolation/"
     extrapolation_models_dir = models_dir + "Extrapolation/"
-    os.mkdir(interpolation_models_dir)
-    os.mkdir(extrapolation_models_dir)
+    auto_mkdir(interpolation_models_dir)
+    auto_mkdir(extrapolation_models_dir)
 
     # interpolation tests
     train_and_predict(interpolation_csvs_dir, interpolation_models_dir)
@@ -33,7 +35,7 @@ def run_mllibrary(results_dir):
 def train_and_predict(csvs_dir, workdir):
     results = os.listdir(csvs_dir)
     for r in results:
-        if "training" in r:
+        if "training" in r and "full" not in r:  # todo temp, remove later
             training_set = csvs_dir + r
             test_set = training_set.replace("training", "test")
             current_model = r.strip(".csv").strip("training_set")

@@ -15,7 +15,7 @@ from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
-from utils import show_error
+from utils import show_error, auto_mkdir
 from mllibrary_manager import run_mllibrary
 
 
@@ -79,7 +79,7 @@ def end_run_service(service):
 def final_processing():
     print(colored("\nFinal processing...", "blue"))
     results_dir = campaign_name + "/Results"
-    # os.mkdir(results_dir)
+    auto_mkdir(results_dir)
 
     process_subfolder(results_dir, "full", ordered_services)
 
@@ -118,7 +118,6 @@ campaign_name, repetitions, cooldown = get_run_info()
 campaign_name = "runs-results/" + campaign_name
 
 final_processing()
-# run_mllibrary(campaign_name + "/Results")
 quit()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
