@@ -44,8 +44,8 @@ configuration:
     parallelism: [ 1, 2, 4, 8, 12, 16, 20, 24, 28, 32 ]
   ml_library:
     use: True
-    interpolation_values: [ ]
-    extrapolation_values: [ ]
+    interpolation_values: [ 12.0, 20.0 ]
+    extrapolation_values: [ 28.0, 32.0 ]
   other:
     time_correction: 2
     test_single_components: True

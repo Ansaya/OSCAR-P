@@ -8,6 +8,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
+from input_file_processing import get_interpolation_values, get_extrapolation_values
 from utils import show_error, list_of_strings_to_file, auto_mkdir
 
 
@@ -212,9 +213,8 @@ def plot_ml_predictions_graphs(results_dir, services):
     for s in services:
         subfolders_list.append(s["name"])
 
-    # todo read from file
-    interpolation_test_values = [12.0, 20.0]
-    extrapolation_test_values = [28.0, 32.0]
+    interpolation_test_values = get_interpolation_values()
+    extrapolation_test_values = get_extrapolation_values()
 
     for s in subfolders_list:
         # load the required dataframes
@@ -336,11 +336,10 @@ def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, op
     filename_test = workdir + "test_set_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
 
-    # todo read from input file
     if operation == "Interpolation":
-        test_set_values = [12.0, 20.0]
+        test_set_values = get_interpolation_values()
     elif operation == "Extrapolation":
-        test_set_values = [28.0, 32.0]
+        test_set_values = get_extrapolation_values()
     else:
         show_error("Invalid operation specified, exiting")
         quit()

@@ -9,13 +9,15 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
     apply_cluster_configuration, generate_fdl_single_service, remove_all_services, create_bucket, \
     recreate_output_buckets
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
-    get_run_info, get_test_single_components, get_service_by_name
+    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_interpolation_values, \
+    get_extrapolation_values
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, merge_csv_of_service, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
 from utils import show_error, auto_mkdir
+from mllibrary_manager import run_mllibrary
 
 
 def prepare_cluster():
@@ -87,12 +89,13 @@ def final_processing():
             process_subfolder(results_dir, s["name"], [s])
             # merge_csv_of_service(campaign_name, s["name"])
     print(colored("Done!", "green"))
-    # run_mllibrary(results_dir)
-    plot_ml_predictions_graphs(results_dir, ordered_services)
+
+    if get_use_ml_library():
+        run_mllibrary(results_dir)
+        plot_ml_predictions_graphs(results_dir, ordered_services)
 
 
 def process_subfolder(results_dir, subfolder, services):
-    return  # todo temp
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
     make_runtime_core_csv(results_dir, subfolder, df)
@@ -101,14 +104,21 @@ def process_subfolder(results_dir, subfolder, services):
     save_dataframes(results_dir, subfolder, df, adf)
 
 
+def test():
+    print(get_use_ml_library())
+    print(get_interpolation_values())
+    print(get_extrapolation_values())
+    quit()
+
+
+# test()
+
 ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
-print(ordered_services)
-quit()
-# show_workflow(ordered_services)
+show_workflow(ordered_services)
 
 base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-# show_runs(base, nodes, repetitions)
+show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 

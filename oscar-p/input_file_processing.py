@@ -360,3 +360,21 @@ def get_debug():
     with open("input.yaml", "r") as file:
         i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["other"]
         return i["debug"]
+
+
+def get_use_ml_library():
+    with open("input.yaml", "r") as file:
+        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["ml_library"]
+        return i["use"]
+
+
+def get_interpolation_values():
+    with open("input.yaml", "r") as file:
+        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["ml_library"]
+        return i["interpolation_values"]
+
+
+def get_extrapolation_values():
+    with open("input.yaml", "r") as file:
+        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["ml_library"]
+        return i["extrapolation_values"]
