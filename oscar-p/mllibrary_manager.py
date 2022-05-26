@@ -33,25 +33,26 @@ def run_mllibrary(results_dir):
 def train_and_predict(csvs_dir, workdir):
     results = os.listdir(csvs_dir)
     for r in results:
-        if ".csv" in r and "training" in r and "full" in r:  # todo temporary, remove last condition
+        if "training" in r:
             training_set = csvs_dir + r
             test_set = training_set.replace("training", "test")
             current_model = r.strip(".csv").strip("training_set")
 
             # with SFS
             config_file = "MLlibrary/MLlibrary-config-SFS.ini"
-            output_dir = workdir + current_model + "_model_SFS"
-            # train_models(config_file, training_set, output_dir)
+            output_dir_sfs = workdir + current_model + "_model_SFS"
+            train_models(config_file, training_set, output_dir_sfs)
 
             # without SFS
             config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
-            output_dir = workdir + current_model + "_model_noSFS"
-            train_models(config_file, training_set, output_dir)
+            output_dir_no_sfs = workdir + current_model + "_model_noSFS"
+            train_models(config_file, training_set, output_dir_no_sfs)
 
             # prediction
             config_file = "MLlibrary/MLlibrary-predict.ini"
             set_mllibrary_predict_path(config_file, test_set)
-            make_prediction(config_file, output_dir)
+            make_prediction(config_file, output_dir_sfs)
+            make_prediction(config_file, output_dir_no_sfs)
 
 
 def train_models(config_file, filepath, output_dir):
@@ -78,10 +79,13 @@ def set_mllibrary_predict_path(config_file, filepath):
         parser.write(file)
 
 
-# this functions makes predictions by used the trained models
-# config_file points to MLlibrary-predict.ini
-# workdir instead points to the currently considered model (eg. Models/Interpolation/full_model_noSFS)
 def make_prediction(config_file, workdir):
+    """
+    this functions makes predictions by using the trained models
+    :param config_file: points to MLlibrary-predict.ini
+    :param workdir: points to the currently considered model (e.g. Models/Interpolation/full_model_noSFS)
+    """
+
     regressors_list = ["DecisionTree", "LRRidge", "RandomForest", "XGBoost"]
     for regressor_name in regressors_list:
         regressor_path = workdir + "/" + regressor_name + ".pickle"

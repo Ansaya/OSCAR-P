@@ -180,13 +180,84 @@ def make_runtime_core_csv(campaign_name, subfolder, data):
     return
 
 
-def plot_ml_predictions_graphs(results_dir, subfolder, data, averaged_data):
+def plot_ml_predictions_graphs(results_dir, services):
+    # first let's make a list of the "subfolders" we'll need to process
+    subfolders_list = ["full"]
+
+    for s in services:
+        subfolders_list.append(s["name"])
+        
+    # print(subfolders_list)
+
+    for s in subfolders_list:
+        # load the required dataframes
+        df, adf = load_dataframes(results_dir, s)
+
+        #
+        find_best_prediction(results_dir, s)
+
+        quit()
+    quit()
+
     graphs_dir = results_dir + "/Graphs/"
+    models_dir = results_dir + "/Models/"
+
     df = pd.DataFrame(data)
     fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=subfolder,
                      labels={"x": "Cores", "y": "Runtime (seconds)"})
     fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
     fig.write_image(graphs_dir + "ml_predictions_" + subfolder + ".png")
+
+
+def load_dataframes(results_dir, subfolder):
+    dataframe_dir = results_dir + "/Dataframes/"
+    df = pd.read_pickle(dataframe_dir + subfolder + "_data.pickle")
+    adf = pd.read_pickle(dataframe_dir + subfolder + "_average_data.pickle")
+    return df, adf
+
+
+def find_best_prediction(results_dir, subfolder):
+    models_dir = results_dir + "/Models/"
+    interpolation_dir = models_dir + "Interpolation/"
+    extrapolation_dir = models_dir + "Extrapolation/"
+    sfs_model = subfolder + "_model_SFS/"
+    no_sfs_model = subfolder + "_model_noSFS/"
+
+    workdir = [extrapolation_dir + sfs_model, extrapolation_dir + no_sfs_model]
+    best_model, min_mape, summary = find_best_model(workdir)
+    print(best_model, min_mape)
+    for s in summary:
+        print(s)
+
+    # best_model is the full path to the best model
+
+    prediction = pd.read_csv(best_model + "/prediction.csv")
+    print(prediction)
+
+    return
+
+
+def find_best_model(workdir):
+    min_mape = 1
+    best_model = ""
+
+    summary = ["noSFS"]
+
+    # the two workdir are of course the models obtained with SFS and the ones without
+    for w in workdir:
+        results = os.listdir(w)
+        for r in results:
+            if "output_predict" in r:
+                with open(w + r + "/mape.txt", "r") as file:
+                    mape = float(file.readline())
+                    mape_h = int(mape * 100 * 100) / 100  # human readable, also laziness 101
+                    summary.append("\t" + r.split("_")[2] + " " + str(mape_h))
+                    # print(r, mape)
+                    if mape < min_mape:
+                        min_mape = mape
+                        best_model = w + r
+        summary.append("SFS")
+    return best_model, min_mape, summary[:-1]
 
 
 def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, operation):
@@ -201,8 +272,10 @@ def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, op
 
     csvs_dir = results_dir + "/CSVs/"
     workdir = csvs_dir + operation + "/"
+
     if not os.path.exists(workdir):
         os.mkdir(workdir)
+
     filename_training = workdir + "training_set_" + subfolder + ".csv"
     filename_test = workdir + "test_set_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
@@ -247,8 +320,13 @@ def save_dataframes(results_dir, subfolder, df, adf):
     :return: describe what it returns
     """
 
-    df.to_pickle(csvs_dir + "data.pickle")
-    adf.to_pickle(csvs_dir + "average_data.pickle")
+    dataframe_dir = results_dir + "/Dataframes/"
+
+    if not os.path.exists(dataframe_dir):
+        os.mkdir(dataframe_dir)
+
+    df.to_pickle(dataframe_dir + subfolder + "_data.pickle")
+    adf.to_pickle(dataframe_dir + subfolder + "_average_data.pickle")
 
 
 def read_csv_header(filepath):

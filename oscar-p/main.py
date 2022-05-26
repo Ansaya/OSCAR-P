@@ -10,8 +10,8 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
     recreate_output_buckets
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
     get_run_info, get_test_single_components, get_service_by_name
-from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, merge_csv_of_service,\
-    make_runtime_core_csv_models, plot_ml_predictions_graphs
+from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, merge_csv_of_service, \
+    make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
@@ -78,25 +78,28 @@ def end_run_service(service):
 
 def final_processing():
     print(colored("\nFinal processing...", "blue"))
-    os.mkdir(campaign_name + "/Results")
-    process_subfolder("full", ordered_services)
+    results_dir = campaign_name + "/Results"
+    # os.mkdir(results_dir)
+
+    process_subfolder(results_dir, "full", ordered_services)
 
     if get_test_single_components():
         for s in ordered_services:
-            process_subfolder(s["name"], [s])
+            process_subfolder(results_dir, s["name"], [s])
             # merge_csv_of_service(campaign_name, s["name"])
     print(colored("Done!", "green"))
-    run_mllibrary(campaign_name + "/Results")
-    plot_ml_predictions_graphs(campaign_name + "/Results", subfolder)
+    # run_mllibrary(results_dir)
+    plot_ml_predictions_graphs(results_dir, ordered_services)
 
 
-def process_subfolder(subfolder, services):
+def process_subfolder(results_dir, subfolder, services):
+    return  # todo temp
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
-    plot_runtime_core_graphs(campaign_name + "/Results", subfolder, df, adf)
-    make_runtime_core_csv(campaign_name + "/Results", subfolder, df)
-    make_runtime_core_csv_models(campaign_name + "/Results", subfolder, df, adf, "Interpolation")
-    make_runtime_core_csv_models(campaign_name + "/Results", subfolder, df, adf, "Extrapolation")
-    save_dataframes(df, adf)
+    plot_runtime_core_graphs(results_dir, subfolder, df, adf)
+    make_runtime_core_csv(results_dir, subfolder, df)
+    make_runtime_core_csv_for_ml(results_dir, subfolder, df, adf, "Interpolation")
+    make_runtime_core_csv_for_ml(results_dir, subfolder, df, adf, "Extrapolation")
+    save_dataframes(results_dir, subfolder, df, adf)
 
 
 def test():
@@ -106,20 +109,16 @@ def test():
 # test()
 
 ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
-show_workflow(ordered_services)
+# show_workflow(ordered_services)
 
 base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-show_runs(base, nodes, repetitions)
-
-print(len(runs))
-
-quit()
+# show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
-# final_processing()
-run_mllibrary(campaign_name + "/Results")
+final_processing()
+# run_mllibrary(campaign_name + "/Results")
 quit()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
@@ -134,7 +133,7 @@ cluster_name = get_cluster_name()
 # todo all oscar command should specify on which cluster to execute
 
 for run in runs:
-    print(colored("\nStarting " + run["id"], "blue"))  # todo might be nice to say 6 out of 30 for example
+    print(colored("\nStarting " + run["id"] + " of " + str(len(runs)), "blue"))
     os.mkdir(os.path.join(campaign_name, run["id"]))  # creates the working directory
 
     prepare_cluster()
