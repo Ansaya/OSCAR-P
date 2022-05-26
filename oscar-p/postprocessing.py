@@ -179,31 +179,38 @@ def make_runtime_core_csv(results_dir, subfolder, data):
 
 
 def plot_ml_predictions_graphs(results_dir, services):
+    graphs_dir = results_dir + "/Graphs/"
+
     # first let's make a list of the "subfolders" we'll need to process
     subfolders_list = ["full"]
 
     for s in services:
         subfolders_list.append(s["name"])
-        
-    # print(subfolders_list)
+
+    # todo read from file
+    interpolation_test_values = [12.0, 20.0]
+    extrapolation_test_values = [28.0, 32.0]
 
     for s in subfolders_list:
         # load the required dataframes
         df, adf = load_dataframes(results_dir, s)
 
-        #
-        find_best_prediction(results_dir, s)
+        extrapolation = find_best_predictions(results_dir, s)
+
+        plot_ml_predictions_graph(graphs_dir, s, extrapolation_test_values, extrapolation, df, adf)
 
         quit()
-    quit()
 
-    graphs_dir = results_dir + "/Graphs/"
-    models_dir = results_dir + "/Models/"
 
-    df = pd.DataFrame(data)
-    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=subfolder,
+def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df, adf):
+    if subfolder == "full":
+        subfolder = "Full workflow"
+    title = subfolder + " - " + dictionary["best_model"] + " - " + dictionary["mape"]
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title,
                      labels={"x": "Cores", "y": "Runtime (seconds)"})
-    fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
+    fig.add_scatter(x=adf["parallelism"], y=adf["runtime"], name="Average", mode="lines")
+    fig.add_scatter(x=test_values, y=dictionary["values"], name="Prediction", mode="markers",
+                    marker=dict(size=10, symbol="x", color="red"))
     fig.write_image(graphs_dir + "ml_predictions_" + subfolder + ".png")
 
 
@@ -225,7 +232,7 @@ def find_best_predictions(results_dir, subfolder):
     no_sfs_model = subfolder + "_model_noSFS/"
 
     # interpolation
-    workdir = [interpolation_dir + sfs_model, interpolation_dir + no_sfs_model]
+    # workdir = [interpolation_dir + sfs_model, interpolation_dir + no_sfs_model]
     # interpolation = find_best_prediction(workdir, summaries_dir + subfolder + "_interpolation.txt")
 
     # extrapolation
@@ -234,7 +241,7 @@ def find_best_predictions(results_dir, subfolder):
 
     print(extrapolation)
 
-    return
+    return extrapolation
 
 
 def find_best_prediction(workdir, summary_path):
