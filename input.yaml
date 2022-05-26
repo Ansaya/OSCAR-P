@@ -42,6 +42,10 @@ configuration:
     repetitions: 3
     cooldown_time: 60
     parallelism: [ 1, 2, 4, 8, 12, 16, 20, 24, 28, 32 ]
+  ml_library:
+    use: True
+    interpolation_values: [ ]
+    extrapolation_values: [ ]
   other:
     time_correction: 2
     test_single_components: True

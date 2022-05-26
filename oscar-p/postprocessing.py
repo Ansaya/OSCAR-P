@@ -11,8 +11,15 @@ import numpy as np
 from utils import show_error, list_of_strings_to_file, auto_mkdir
 
 
-# returns the time of the creation of the first job in a given timelist
 def get_first_job(timelist):
+    """
+    returns the time of the creation of the first job in a given timelist
+    :param timelist: dictionary containing a list of jobs, each job itself a dictionary containing the following info:
+            service, node, job_create, pod_create, job_start, bash_script_start, bash_script_end, job_finish;
+            timelists are created by function "get_timed_jobs_list" in file "retrieve_logs.py"
+    :return: the time of the creation (job_create) of the first job as datetime
+    """
+
     start_list = []
 
     for k in timelist.keys():
@@ -26,8 +33,15 @@ def get_first_job(timelist):
     return first
 
 
-# returns the time of the completion of the last job in a given timelist
 def get_last_job(timelist):
+    """
+    returns the time of the completion of the last job in a given timelist
+    :param timelist: dictionary containing a list of jobs, each job itself a dictionary containing the following info:
+            service, node, job_create, pod_create, job_start, bash_script_start, bash_script_end, job_finish;
+            timelists are created by function "get_timed_jobs_list" in file "retrieve_logs.py"
+    :return: the time of the completion (job_finish) of the last job as datetime
+    """
+
     finish_list = []
 
     for k in timelist.keys():
@@ -41,9 +55,15 @@ def get_last_job(timelist):
     return last
 
 
-# given the directory of a specific run and the list of services, it returns the runtime of that run
-# the list of services is ordered hence not needing to many checks
 def calculate_runtime(working_dir, services):
+    """
+    given the directory of a specific run (i.e. "Run #1/") and the list of services, it returns the runtime of that run;
+    the list of services is ordered, so it doesn't need too many checks
+    :param working_dir: directory of a specific run (i.e. "Run #1/")
+    :param services: ordered list of services, each a dictionary containing name of the service (as string),
+            input bucket (as string) and output buckets (list of strings)
+    :return: runtime of the run in seconds
+    """
 
     first, last = 0, 0
     for service in services:
@@ -62,8 +82,13 @@ def calculate_runtime(working_dir, services):
     return runtime
 
 
-# receives a list of values, returns the average
 def calculate_average(values):
+    """
+    receives a list of values, returns the average
+    :param values: list of values
+    :return: average
+    """
+
     average = 0
     for v in values:
         average += v

@@ -16,7 +16,6 @@ from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
 from utils import show_error, auto_mkdir
-from mllibrary_manager import run_mllibrary
 
 
 def prepare_cluster():
@@ -102,13 +101,9 @@ def process_subfolder(results_dir, subfolder, services):
     save_dataframes(results_dir, subfolder, df, adf)
 
 
-def test():
-    quit()
-
-
-# test()
-
 ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
+print(ordered_services)
+quit()
 # show_workflow(ordered_services)
 
 base, runs, nodes = run_scheduler()
