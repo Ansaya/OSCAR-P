@@ -95,10 +95,13 @@ def calculate_maximum_parallelism(run):
     return calculate_parallelism(smallest_core, max_cores, 0, 0, run["nodes"])
 
 
-# outputs 2 runtime/parallelism dataframes
-# the first contains every run (including repetitions) and its used both for the graph and for the CSV
-# the second one instead averages the repeated runs, and its used only for the graph
 def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
+    """
+    outputs two runtime/parallelism dataframes:
+    * the first contains every run (including repetitions)
+    * the second one instead averages the repeated runs
+    :return: two runtime/parallelism dataframes, complete and averaged
+    """
 
     runtimes = []
     parallelism = []
@@ -148,7 +151,8 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
     return df, adf
 
 
-def plot_runtime_core_graph(campaign_name, subfolder, data, averaged_data):
+# todo rename graphs
+def plot_runtime_core_graphs(campaign_name, subfolder, data, averaged_data):
     campaign_name += "/Graphs/"
     if not os.path.exists(campaign_name):
         os.mkdir(campaign_name)
@@ -176,18 +180,31 @@ def make_runtime_core_csv(campaign_name, subfolder, data):
     return
 
 
-# generates the training and test set for interpolation (or extrapolation) of a campaign
-# campaign_name is the path to the "Results" folder of the considered campaign
-# subfolder specifies whether we're considering the full workflow or a service
-# data is the complete dataframe with all values, used for the training set
-# averaged_data is the reduced dataframe with averaged values, used for the test set
-# operation specifies whether we are performing Interpolation or Extrapolation
-def make_runtime_core_csv_models(campaign_name, subfolder, data, averaged_data, operation):
-    campaign_name += "/CSVs/" + operation + "/"
-    if not os.path.exists(campaign_name):
-        os.mkdir(campaign_name)
-    filename_training = campaign_name + "training_set_" + subfolder + ".csv"
-    filename_test = campaign_name + "test_set_" + subfolder + ".csv"
+def plot_ml_predictions_graphs(results_dir, subfolder, data, averaged_data):
+    graphs_dir = results_dir + "/Graphs/"
+    df = pd.DataFrame(data)
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=subfolder,
+                     labels={"x": "Cores", "y": "Runtime (seconds)"})
+    fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
+    fig.write_image(graphs_dir + "ml_predictions_" + subfolder + ".png")
+
+
+def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, operation):
+    """
+    generates the training and test set for the interpolation (or extrapolation) tests of a campaign
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param data: complete dataframe with all values obtained in the campaign, used for the training set
+    :param averaged_data: reduced dataframe with averaged values, used for the test set
+    :param operation: specifies whether we are performing Interpolation or Extrapolation
+    """
+
+    csvs_dir = results_dir + "/CSVs/"
+    workdir = csvs_dir + operation + "/"
+    if not os.path.exists(workdir):
+        os.mkdir(workdir)
+    filename_training = workdir + "training_set_" + subfolder + ".csv"
+    filename_test = workdir + "test_set_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
 
     # todo read from input file
@@ -218,8 +235,20 @@ def make_runtime_core_csv_models(campaign_name, subfolder, data, averaged_data, 
             runtime = averaged_data["runtime"][i]
             if core in test_set_values:
                 file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
-    # print("Done!")
-    return
+
+
+def save_dataframes(results_dir, subfolder, df, adf):
+    """
+    saves the two dataframes to file so that they can be reused (when making the prediction graphs for example)
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param df: complete dataframe with all values obtained in the campaign
+    :param adf: reduced dataframe with averaged values
+    :return: describe what it returns
+    """
+
+    df.to_pickle(csvs_dir + "data.pickle")
+    adf.to_pickle(csvs_dir + "average_data.pickle")
 
 
 def read_csv_header(filepath):
