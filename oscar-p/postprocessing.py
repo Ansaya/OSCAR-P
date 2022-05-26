@@ -8,6 +8,8 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
+from utils import show_error
+
 
 # returns the time of the creation of the first job in a given timelist
 def get_first_job(timelist):
@@ -174,14 +176,28 @@ def make_runtime_core_csv(campaign_name, subfolder, data):
     return
 
 
-def make_runtime_core_csv_extrapolation(campaign_name, subfolder, data, averaged_data):
-    campaign_name += "/CSVs/Extrapolation/"
+# generates the training and test set for interpolation (or extrapolation) of a campaign
+# campaign_name is the path to the "Results" folder of the considered campaign
+# subfolder specifies whether we're considering the full workflow or a service
+# data is the complete dataframe with all values, used for the training set
+# averaged_data is the reduced dataframe with averaged values, used for the test set
+# operation specifies whether we are performing Interpolation or Extrapolation
+def make_runtime_core_csv_models(campaign_name, subfolder, data, averaged_data, operation):
+    campaign_name += "/CSVs/" + operation + "/"
     if not os.path.exists(campaign_name):
         os.mkdir(campaign_name)
     filename_training = campaign_name + "training_set_" + subfolder + ".csv"
     filename_test = campaign_name + "test_set_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
-    test_set_values = [28.0, 32.0]  # todo read from input file
+
+    # todo read from input file
+    if operation == "Interpolation":
+        test_set_values = [12.0, 20.0]
+    elif operation == "Extrapolation":
+        test_set_values = [28.0, 32.0]
+    else:
+        show_error("Invalid operation specified, exiting")
+        quit()
 
     # makes training set file
     with open(filename_training, "w") as file:

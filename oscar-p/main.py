@@ -11,7 +11,7 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
     get_run_info, get_test_single_components, get_service_by_name
 from postprocessing import prepare_runtime_data, plot_runtime_core_graph, make_runtime_core_csv, merge_csv_of_service, \
-    make_runtime_core_csv_extrapolation
+    make_runtime_core_csv_models
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
@@ -93,7 +93,8 @@ def process_subfolder(subfolder, services):
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
     plot_runtime_core_graph(campaign_name + "/Results", subfolder, df, adf)
     make_runtime_core_csv(campaign_name + "/Results", subfolder, df)
-    make_runtime_core_csv_extrapolation(campaign_name + "/Results", subfolder, df, adf)
+    make_runtime_core_csv_models(campaign_name + "/Results", subfolder, df, adf, "Interpolation")
+    make_runtime_core_csv_models(campaign_name + "/Results", subfolder, df, adf, "Extrapolation")
 
 
 def test():
@@ -111,8 +112,8 @@ show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
-run_mllibrary(campaign_name + "/Results")
 # final_processing()
+run_mllibrary(campaign_name + "/Results")
 quit()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
