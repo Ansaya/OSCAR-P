@@ -174,6 +174,38 @@ def make_runtime_core_csv(campaign_name, subfolder, data):
     return
 
 
+def make_runtime_core_csv_extrapolation(campaign_name, subfolder, data, averaged_data):
+    campaign_name += "/CSVs/Extrapolation/"
+    if not os.path.exists(campaign_name):
+        os.mkdir(campaign_name)
+    filename_training = campaign_name + "training_set_" + subfolder + ".csv"
+    filename_test = campaign_name + "test_set_" + subfolder + ".csv"
+    header = "runtime,cores,log(cores)\n"
+    test_set_values = [28.0, 32.0]  # todo read from input file
+
+    # makes training set file
+    with open(filename_training, "w") as file:
+        file.write(header)
+        for i in range(len(data)):
+            core = data["parallelism"][i]
+            log_core = round(math.log10(int(core)), 5)
+            runtime = data["runtime"][i]
+            if core not in test_set_values:
+                file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
+
+    # makes test set file
+    with open(filename_test, "w") as file:
+        file.write(header)
+        for i in range(len(averaged_data)):
+            core = averaged_data["parallelism"][i]
+            log_core = round(math.log10(int(core)), 5)
+            runtime = averaged_data["runtime"][i]
+            if core in test_set_values:
+                file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
+    # print("Done!")
+    return
+
+
 def read_csv_header(filepath):
     with open(filepath, "r") as file:
         lines = file.readlines()
