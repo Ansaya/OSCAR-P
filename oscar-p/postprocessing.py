@@ -177,34 +177,54 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
     return df, adf
 
 
-# todo rename graphs
-def plot_runtime_core_graphs(results_dir, subfolder, data, averaged_data):
+def plot_runtime_core_graphs(results_dir, subfolder, df, adf):
+    """
+    plots a graph with all the runs and a line for the average
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param df: dataframe containing the runtime/parallelism data for every run (including repetitions)
+    :param adf: dataframe containing the runtime/parallelism data for every run (repeated runs are averaged)
+    """
+
     graphs_dir = results_dir + "/Graphs/"
     auto_mkdir(graphs_dir)
-    df = pd.DataFrame(data)
-    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=graphs_dir + "_" + subfolder,
-                     labels={"x": "Cores", "y": "Runtime (seconds)"})
-    fig.add_scatter(x=averaged_data["parallelism"], y=averaged_data["runtime"], name="Average", mode="lines")
+    title = subfolder
+    if subfolder == "full":
+        title = "Full workflow"
+    fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title, template="simple_white",
+                     labels={"parallelism": "Parallelism", "runtime": "Runtime (seconds)", "runs": "Runs"})
+    fig.add_scatter(x=adf["parallelism"], y=adf["runtime"], name="Average", mode="lines")
     fig.write_image(graphs_dir + "runtime_core_" + subfolder + ".png")
 
 
-def make_runtime_core_csv(results_dir, subfolder, data):
+def make_runtime_core_csv(results_dir, subfolder, df):
+    """
+    writes the dataframe as CSV that can be fed to the ML library
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param df: dataframe containing the runtime/parallelism data for every run (including repetitions)
+    """
+
     csvs_dir = results_dir + "/CSVs/"
     auto_mkdir(csvs_dir)
     filename = csvs_dir + "runtime_core_" + subfolder + ".csv"
     header = "runtime,cores,log(cores)\n"
     with open(filename, "w") as file:
         file.write(header)
-        for i in range(len(data)):
-            core = data["parallelism"][i]
+        for i in range(len(df)):
+            core = df["parallelism"][i]
             log_core = round(math.log10(int(core)), 5)
-            runtime = data["runtime"][i]
+            runtime = df["runtime"][i]
             file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
-    # print("Done!")
-    return
 
 
 def plot_ml_predictions_graphs(results_dir, services):
+    """
+    collects the required data needed to plot the ml graphs, such as test values, dataframes and predictions
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param services: ordered list of services, each a dictionary containing name of the service (as string),
+            input bucket (as string) and output buckets (list of strings)
+    """
     graphs_dir = results_dir + "/Graphs/"
 
     # first let's make a list of the "subfolders" we'll need to process
@@ -229,15 +249,30 @@ def plot_ml_predictions_graphs(results_dir, services):
 
 
 def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df, adf, operation):
+    """
+    plots a graph with all the runs, a line for the average and red marks for the predictions
+    :param graphs_dir: directory containing the graphs of the considered campaign (i.e. "Results/Graphs")
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param test_values: array with the "parallelism" values used to make the predictions on
+    :param dictionary: contains info on the prediction, such as the best model, its mape, and the predicted values
+    :param df: dataframe containing the runtime/parallelism data for every run (including repetitions)
+    :param adf: dataframe containing the runtime/parallelism data for every run (repeated runs are averaged)
+    :param operation: string, is either "interpolation" or "extrapolation", only needed to save the image
+    """
+
     if subfolder == "full":
         title = "Full workflow - " + dictionary["best_model"] + " - MAPE " + dictionary["mape"]
     else:
         title = subfolder + " - " + dictionary["best_model"] + " - MAPE " + dictionary["mape"]
+
     fig = px.scatter(df, x="parallelism", y="runtime", color="runs", title=title, template="simple_white",
                      labels={"parallelism": "Parallelism", "runtime": "Runtime (seconds)", "runs": "Runs"})
+
     fig.add_scatter(x=adf["parallelism"], y=adf["runtime"], name="Average", mode="lines")
+
     fig.add_scatter(x=test_values, y=dictionary["values"], name="Prediction", mode="markers",
                     marker=dict(size=10, symbol="x", color="red"))
+
     fig.write_image(graphs_dir + "ml_" + operation + "_" + subfolder + ".png")
 
 
@@ -370,9 +405,8 @@ def save_dataframes(results_dir, subfolder, df, adf):
     saves the two dataframes to file so that they can be reused (when making the prediction graphs for example)
     :param results_dir: path to the "Results" folder of the considered campaign
     :param subfolder: specifies whether we're considering the full workflow ("full") or a service
-    :param df: complete dataframe with all values obtained in the campaign
-    :param adf: reduced dataframe with averaged values
-    :return: describe what it returns
+    :param df: dataframe containing the runtime/parallelism data for every run (including repetitions)
+    :param adf: dataframe containing the runtime/parallelism data for every run (repeated runs are averaged)
     """
 
     dataframe_dir = results_dir + "/Dataframes/"
