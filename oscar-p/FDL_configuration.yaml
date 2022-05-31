@@ -1,7 +1,7 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '1.9'
       image: scrapjack/blurry-faces-modded:stable
       input:
       - path: input-videos
@@ -15,7 +15,7 @@ functions:
         suffix: []
       script: bash-scripts/blurry-faces.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '1.9'
       image: scrapjack/mask-detector-modded:stable
       input:
       - path: blurred-images

@@ -104,9 +104,15 @@ def calculate_parallelism(cores, max_cores, memory, max_memory, nodes):
     return parallelism
 
 
-# by checking the resources of every service in a run, it returns the parallelism of the "most parallel" service
+#
 # todo for now it considers only cores
 def calculate_maximum_parallelism(run):
+    """
+    checks the resources of every service in a run and returns the parallelism level of the "most parallel" service
+    :param run: dictionary containing info on a specific run, such as the number of nodes, the list and configuration of services
+    :return: the parallelism level of the "most parallel" service
+    """
+
     from input_file_processing import get_worker_nodes_info
     _, max_cores, max_memory = get_worker_nodes_info()
 
@@ -141,12 +147,12 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
     for i in range(base_length):
         runtimes_to_average = []
         for j in range(repetitions):
-            working_dir = os.path.join(campaign_name, runs[i+(j*base_length)]["id"], subfolder)
+            working_dir = os.path.join(campaign_name, runs[i + (j * base_length)]["id"], subfolder)
             runtime = calculate_runtime(working_dir, services)
             runtimes_to_average.append(runtime)
             runtimes.append(runtime)
             parallelism.append(calculate_maximum_parallelism(runs[i]))
-            run.append("Run #" + str(j+1))
+            run.append("Run #" + str(j + 1))
         average_runtime = calculate_average(runtimes_to_average)
         average_runtime = round(average_runtime, 3)
 
@@ -307,6 +313,7 @@ def find_best_predictions(results_dir, subfolder):
 def find_best_prediction(workdir, summary_path):
     best_model_path, min_mape, summary = find_best_model(workdir)
 
+    # saves the summary to file
     list_of_strings_to_file(summary, summary_path)
 
     prediction_csv = pd.read_csv(best_model_path + "/prediction.csv")
@@ -454,57 +461,61 @@ def merge_csv_of_service(campaign_name, service_name):
 
 # todo modify this method and use it
 # will recieve directory, subfolder and list of services
-def make_statistics(data):
-	
-	campaign_dir = "runs-results/10-seconds-vm"
-	subfolder = "full"
-	# service = "blur-faces"
-	service = "mask-detector"
-	
-	
-	# print(os.listdir(campaign_dir))
-	
-	data = {}
-	
-	for run in os.listdir(campaign_dir):
-		if "Run" in run:
-			filepath = os.path.join(campaign_dir, run, subfolder, service + "_jobs.csv")
-			for row in csv_to_list_of_dict(filepath):
-				data[row["job_name"]]= {
-							"wait": float(row["wait"]),
-							"pod_creation": float(row["pod_creation"]),
-							"overhead": float(row["overhead"]),
-							"compute_time": float(row["compute_time"]),
-							"write_back": float(row["write_back"])
-							}
-	
-	n = len(data)
-	data_matrix = np.zeros((n, 5))
-	
-	keys = list(data.keys())
-	
-	
-	for i in range(n):
-		
-		job = data[keys[i]]
-		
-		data_matrix[i, 0] += job["wait"]
-		data_matrix[i, 1] += job["pod_creation"]
-		data_matrix[i, 2] += job["overhead"]
-		data_matrix[i, 3] += job["compute_time"]
-		data_matrix[i, 4] += job["write_back"]
-		
-	print(data_matrix[0:10])
-	total = np.sum(data_matrix, axis=0)
-	print(total)
-	mean = total / n
-	mean += 0.0000000001
-	print(mean)
-	variance = np.square(data_matrix - mean)
-	variance = np.sum(variance, axis=0) / n
-	print(variance)
-	sigma = np.sqrt(variance)  # population standard deviation
-	coeff_of_variation = sigma / mean
-	print(coeff_of_variation)
-	
-	return
+def make_statistics(campaign_dir, results_dir, subfolder, services):
+    statistics_dir = results_dir + "/Statistics/"
+    auto_mkdir(statistics_dir)
+
+    for service in services:
+        output = []
+        service_name = service["name"]
+        data = {}
+
+        for run in os.listdir(campaign_dir):
+            if "Run" in run:
+                filepath = os.path.join(campaign_dir, run, subfolder, service_name + "_jobs.csv")
+                for row in csv_to_list_of_dict(filepath):
+                    data[row["job_name"]] = {
+                        "wait": float(row["wait"]),
+                        "pod_creation": float(row["pod_creation"]),
+                        "overhead": float(row["overhead"]),
+                        "compute_time": float(row["compute_time"]),
+                        "write_back": float(row["write_back"])
+                    }
+
+        n = len(data)
+        data_matrix = np.zeros((n, 5))
+
+        keys = list(data.keys())
+
+        for i in range(n):
+            job = data[keys[i]]
+
+            data_matrix[i, 0] += job["wait"]
+            data_matrix[i, 1] += job["pod_creation"]
+            data_matrix[i, 2] += job["overhead"]
+            data_matrix[i, 3] += job["compute_time"]
+            data_matrix[i, 4] += job["write_back"]
+
+        total = np.sum(data_matrix, axis=0)
+        mean = total / n
+        mean += 0.0000000001
+        variance = np.square(data_matrix - mean)
+        variance = np.sum(variance, axis=0) / n
+        sigma = np.sqrt(variance)  # population standard deviation
+        coeff_of_variation = sigma / mean
+        
+        operations = ["wait", "pod_creation", "overhead", "compute_time", "write_back"]
+        for i in range(len(operations)):
+            output.append(operations[i] + ":")
+            output.append("\tTotal: " + str(round(total[i], 2)))
+            output.append("\tMean: " + str(round(mean[i], 2)))
+            output.append("\tVariance: " + str(round(variance[i], 2)))
+            output.append("\tPopulation standard deviation: " + str(round(sigma[i], 2)))
+            output.append("\tCoefficient of variation: " + str(round(coeff_of_variation[i], 2)))
+            output.append("")
+        
+        if subfolder == "full":
+            filename = "full_workflow" + "_" + service_name + "_statistics.txt"
+        else:
+            filename = service_name + "_only_statistics.txt"
+        list_of_strings_to_file(output, statistics_dir + filename)

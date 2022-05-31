@@ -89,6 +89,8 @@ def final_processing():
             process_subfolder(results_dir, s["name"], [s])
             # merge_csv_of_service(campaign_name, s["name"])
     print(colored("Done!", "green"))
+    
+    quit()
 
     if get_use_ml_library():
         run_mllibrary(results_dir)
@@ -97,7 +99,8 @@ def final_processing():
 
 def process_subfolder(results_dir, subfolder, services):
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
-    # make_statistics(df)
+    make_statistics(campaign_name, results_dir, subfolder, services)
+    return
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
     make_runtime_core_csv(results_dir, subfolder, df)
     make_runtime_core_csv_for_ml(results_dir, subfolder, df, adf, "Interpolation")
@@ -119,7 +122,7 @@ show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
-# test()
+test()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
     show_error("Folder exists. Exiting.")

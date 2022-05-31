@@ -37,7 +37,7 @@ configuration:
     distribution: deterministic
     inter_upload_time: 0
   run:
-    name: "10-seconds-vm-15-files"
+    name: "10-seconds-vm-5-files"
     description: ""
     repetitions: 3
     cooldown_time: 60
