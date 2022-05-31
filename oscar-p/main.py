@@ -34,7 +34,7 @@ def start_run_full():
 
 
 def end_run_full():
-    working_dir = os.path.join(campaign_name, run["id"], "full")
+    working_dir = os.path.join(campaign_dir, run["id"], "full")
     os.mkdir(working_dir)
     pull_logs(working_dir, ordered_services)
     make_csv_table(working_dir, run["services"], run["nodes"])
@@ -71,7 +71,7 @@ def start_run_service(service_name, is_first_service):
 
 
 def end_run_service(service):
-    working_dir = os.path.join(campaign_name, run["id"], service["name"])
+    working_dir = os.path.join(campaign_dir, run["id"], service["name"])
     os.mkdir(working_dir)
     pull_logs(working_dir, [service])
     make_csv_table(working_dir, [service], run["nodes"])
@@ -79,7 +79,7 @@ def end_run_service(service):
 
 def final_processing():
     print(colored("\nFinal processing...", "blue"))
-    results_dir = campaign_name + "/Results"
+    results_dir = campaign_dir + "/Results"
     auto_mkdir(results_dir)
 
     process_subfolder(results_dir, "full", ordered_services)
@@ -90,17 +90,14 @@ def final_processing():
             # merge_csv_of_service(campaign_name, s["name"])
     print(colored("Done!", "green"))
     
-    quit()
-
     if get_use_ml_library():
         run_mllibrary(results_dir)
         plot_ml_predictions_graphs(results_dir, ordered_services)
 
 
 def process_subfolder(results_dir, subfolder, services):
-    df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
-    make_statistics(campaign_name, results_dir, subfolder, services)
-    return
+    df, adf = prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services)
+    make_statistics(campaign_dir, results_dir, subfolder, services)
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
     make_runtime_core_csv(results_dir, subfolder, df)
     make_runtime_core_csv_for_ml(results_dir, subfolder, df, adf, "Interpolation")
@@ -120,16 +117,16 @@ base, runs, nodes = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
 show_runs(base, nodes, repetitions)
 
-campaign_name = "runs-results/" + campaign_name
+campaign_dir = "runs-results/" + campaign_name
 
-test()
+# test()
 
-if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
+if os.path.exists(campaign_dir) and os.path.isdir(campaign_dir):
     show_error("Folder exists. Exiting.")
     quit()
 
-os.mkdir(campaign_name)
-os.system("cp input.yaml " + campaign_name + "/input.yaml")
+os.mkdir(campaign_dir)
+os.system("cp input.yaml " + campaign_dir + "/input.yaml")
 
 
 cluster_name = get_cluster_name()
@@ -137,7 +134,7 @@ cluster_name = get_cluster_name()
 
 for run in runs:
     print(colored("\nStarting " + run["id"] + " of " + str(len(runs)), "blue"))
-    os.mkdir(os.path.join(campaign_name, run["id"]))  # creates the working directory
+    os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
 
     prepare_cluster()
     start_run_full()

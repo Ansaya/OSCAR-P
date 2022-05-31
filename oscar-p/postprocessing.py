@@ -97,15 +97,19 @@ def calculate_average(values):
     return average / len(values)
 
 
-# todo for now considers only cores
 def calculate_parallelism(cores, max_cores, memory, max_memory, nodes):
+    """
+    given the number of nodes, the maximum number of cores and the used number of core, it returns the parallelism level, that is the maximum possible number of containers that can run together at the same time
+    :param cores: number of active cores (i.e. 0.9, 1.9, 3.9)
+    :param max_cores: total number of cores on a node (i.e. 4)
+    :param nodes: number of active nodes
+    :return: the maximum possible number of containers that can run together at the same time
+    """
     cores = round(cores)
     parallelism = (max_cores / cores) * nodes
     return parallelism
 
 
-#
-# todo for now it considers only cores
 def calculate_maximum_parallelism(run):
     """
     checks the resources of every service in a run and returns the parallelism level of the "most parallel" service
@@ -127,11 +131,17 @@ def calculate_maximum_parallelism(run):
     return calculate_parallelism(smallest_core, max_cores, 0, 0, run["nodes"])
 
 
-def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
+def prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services):
     """
     outputs two runtime/parallelism dataframes:
     * the first contains every run (including repetitions)
     * the second one instead averages the repeated runs
+    :param campaign_dir: path to the current campaign folder, containing all the "Run #i" folders as well as the "Results" folder
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param repetitions: number of times each run is repeated
+    :param runs: list of runs, each run being a dictionary containing info such as the number of nodes, the list and configuration of services
+    :param services: ordered list of services, each a dictionary containing name of the service (as string),
+            input bucket (as string) and output buckets (list of strings)
     :return: two runtime/parallelism dataframes, complete and averaged
     """
 
@@ -147,7 +157,7 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
     for i in range(base_length):
         runtimes_to_average = []
         for j in range(repetitions):
-            working_dir = os.path.join(campaign_name, runs[i + (j * base_length)]["id"], subfolder)
+            working_dir = os.path.join(campaign_dir, runs[i + (j * base_length)]["id"], subfolder)
             runtime = calculate_runtime(working_dir, services)
             runtimes_to_average.append(runtime)
             runtimes.append(runtime)
@@ -159,14 +169,12 @@ def prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services):
         averaged_runtimes.append(average_runtime)
         averaged_parallelism.append(calculate_maximum_parallelism(runs[i]))
 
-    # this one is both for the CSV and for the graph
     data = {
         "runtime": runtimes,
         "parallelism": parallelism,
         "runs": run
     }
 
-    # this other one is for the graph
     averaged_data = {
         "runtime": averaged_runtimes,
         "parallelism": averaged_parallelism
@@ -283,6 +291,12 @@ def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df
 
 
 def load_dataframes(results_dir, subfolder):
+    """
+    loads the dataframe and averaged_dataframe for a specific subfolder of a specific campaign
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    """
+
     dataframe_dir = results_dir + "/Dataframes/"
     df = pd.read_pickle(dataframe_dir + subfolder + "_data.pickle")
     adf = pd.read_pickle(dataframe_dir + subfolder + "_average_data.pickle")
@@ -290,6 +304,13 @@ def load_dataframes(results_dir, subfolder):
 
 
 def find_best_predictions(results_dir, subfolder):
+    """
+    called by plot_ml_predictions_graphs, returns two dictionaries containing the predictions made with the best models
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :returns: two dictionary, one for interpolation and one for extrapolation, each containing info on predictions such as the name of the best model, its mape and the predicted values
+    """
+
     # dir definition
     models_dir = results_dir + "/Models/"
     summaries_dir = results_dir + "/Summaries/"
@@ -311,6 +332,13 @@ def find_best_predictions(results_dir, subfolder):
 
 
 def find_best_prediction(workdir, summary_path):
+    """
+    called by find_best_predictions, given two model directories (each contains 4 regressors) returns the predictions of the best model
+    :param work_dir: path to two directories of the currently considered models (with and without SFS)
+    :param summary_path: path to the summary text file
+    :return: a dictionary containing info on predictions such as the name of the best model, its mape and the predicted values
+    """
+
     best_model_path, min_mape, summary = find_best_model(workdir)
 
     # saves the summary to file
@@ -337,6 +365,12 @@ def find_best_prediction(workdir, summary_path):
 
 
 def find_best_model(workdir):
+    """
+    called by find_best_prediction, returns the name of the best model, its mape, and a summary (as list of string) containing the mape of all other models
+    :param work_dir: path to two directories of the currently considered models (with and without SFS)
+    :returns: name of best model, best mape, summary of other models performance
+    """
+
     min_mape = 10
     best_model = ""
 
@@ -424,33 +458,53 @@ def save_dataframes(results_dir, subfolder, df, adf):
     adf.to_pickle(dataframe_dir + subfolder + "_average_data.pickle")
 
 
+# todo move to utils / file utils
 def read_csv_header(filepath):
+    """
+    returns the header of a csv file
+    :param filepath: path to the csv file
+    :returns: header of specified csv file
+    """
+
     with open(filepath, "r") as file:
         lines = file.readlines()
     return lines[0]
 
 
+# todo move to utils / file utils
 def read_csv_content(filepath):
+    """
+    returns the content of a csv file
+    :param filepath: path to the csv file
+    :returns: content of specified csv file
+    """
+
     with open(filepath, "r") as file:
         lines = file.readlines()
     return lines[1:]
 
 
-def merge_csv_of_service(campaign_name, service_name):
+def merge_csv_of_service(campaign_dir, service_name):
+    """
+    for all the runs in a campaign, merges together the CSV files of a specified service
+    :param campaign_dir: path to the current campaign folder, containing all the "Run #i" folders as well as the "Results" folder
+    :param service_name: name of the considered service
+    """
+
     runs = []
-    for x in os.listdir(campaign_name):
+    for x in os.listdir(campaign_dir):
         if "Run #" in x:
             runs.append(x)
 
     filename = service_name + "_jobs.csv"
-    header = read_csv_header(os.path.join(campaign_name, runs[0], service_name, filename))
+    header = read_csv_header(os.path.join(campaign_dir, runs[0], service_name, filename))
 
     merged_csv = [header]
     for run in runs:
-        merged_csv += read_csv_content(os.path.join(campaign_name, run, service_name, filename))
+        merged_csv += read_csv_content(os.path.join(campaign_dir, run, service_name, filename))
 
     filename = "Results/merged_" + service_name + ".csv"
-    filepath = os.path.join(campaign_name, filename)
+    filepath = os.path.join(campaign_dir, filename)
 
     with open(filepath, "w") as file:
         for line in merged_csv:
@@ -459,9 +513,15 @@ def merge_csv_of_service(campaign_name, service_name):
     return
 
 
-# todo modify this method and use it
-# will recieve directory, subfolder and list of services
 def make_statistics(campaign_dir, results_dir, subfolder, services):
+    """
+    for every operation of a service (wait, overhead, compute etc.) calculates its mean, average, variance, population standard deviation and coefficient of variation, saved in a text file under "Results/Statistics"
+    :param campaign_dir: path to the current campaign folder, containing all the "Run #i" folders as well as the "Results" folder
+    :param results_dir: path to the "Results" folder of the considered campaign
+    :param subfolder: specifies whether we're considering the full workflow ("full") or a service
+    :param services: ordered list of services, each a dictionary containing name of the service (as string),
+            input bucket (as string) and output buckets (list of strings)
+    """
     statistics_dir = results_dir + "/Statistics/"
     auto_mkdir(statistics_dir)
 
@@ -503,7 +563,7 @@ def make_statistics(campaign_dir, results_dir, subfolder, services):
         variance = np.sum(variance, axis=0) / n
         sigma = np.sqrt(variance)  # population standard deviation
         coeff_of_variation = sigma / mean
-        
+
         operations = ["wait", "pod_creation", "overhead", "compute_time", "write_back"]
         for i in range(len(operations)):
             output.append(operations[i] + ":")
@@ -513,7 +573,7 @@ def make_statistics(campaign_dir, results_dir, subfolder, services):
             output.append("\tPopulation standard deviation: " + str(round(sigma[i], 2)))
             output.append("\tCoefficient of variation: " + str(round(coeff_of_variation[i], 2)))
             output.append("")
-        
+
         if subfolder == "full":
             filename = "full_workflow" + "_" + service_name + "_statistics.txt"
         else:
