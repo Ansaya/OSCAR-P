@@ -12,7 +12,7 @@ from input_file_processing import workflow_analyzer, show_workflow, run_schedule
     get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_interpolation_values, \
     get_extrapolation_values
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, merge_csv_of_service, \
-    make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes
+    make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
 from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
@@ -97,6 +97,7 @@ def final_processing():
 
 def process_subfolder(results_dir, subfolder, services):
     df, adf = prepare_runtime_data(campaign_name, subfolder, repetitions, runs, services)
+    # make_statistics(df)
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
     make_runtime_core_csv(results_dir, subfolder, df)
     make_runtime_core_csv_for_ml(results_dir, subfolder, df, adf, "Interpolation")
@@ -105,13 +106,9 @@ def process_subfolder(results_dir, subfolder, services):
 
 
 def test():
-    print(get_use_ml_library())
-    print(get_interpolation_values())
-    print(get_extrapolation_values())
+    final_processing()
     quit()
 
-
-# test()
 
 ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
 show_workflow(ordered_services)
@@ -122,8 +119,7 @@ show_runs(base, nodes, repetitions)
 
 campaign_name = "runs-results/" + campaign_name
 
-final_processing()
-quit()
+# test()
 
 if os.path.exists(campaign_name) and os.path.isdir(campaign_name):
     show_error("Folder exists. Exiting.")

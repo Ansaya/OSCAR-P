@@ -29,7 +29,7 @@ def run_mllibrary(results_dir):
     auto_mkdir(extrapolation_models_dir)
 
     # interpolation tests
-    # train_and_predict(interpolation_csvs_dir, interpolation_models_dir)
+    train_and_predict(interpolation_csvs_dir, interpolation_models_dir)
 
     # extrapolation tests
     train_and_predict(extrapolation_csvs_dir, extrapolation_models_dir)

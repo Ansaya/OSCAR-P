@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 from input_file_processing import get_interpolation_values, get_extrapolation_values
-from utils import show_error, list_of_strings_to_file, auto_mkdir
+from utils import show_error, list_of_strings_to_file, auto_mkdir, csv_to_list_of_dict
 
 
 def get_first_job(timelist):
@@ -453,43 +453,58 @@ def merge_csv_of_service(campaign_name, service_name):
 
 
 # todo modify this method and use it
-def make_statistics(data, session_name):
-    n = len(data)
-
-    data_matrix = np.zeros((n, 12))
-
-    for i in range(n):
-        job = data[i]
-        data_matrix[i, 0] += job[11]  # full_time_total
-        data_matrix[i, 1] += job[12]  # wait_total
-        data_matrix[i, 2] += job[13]  # pod_creation_total
-        data_matrix[i, 3] += job[14]  # overhead_total
-        data_matrix[i, 4] += job[15]  # compute_total
-        data_matrix[i, 5] += job[16]  # compute_overhead
-        data_matrix[i, 6] += job[17]  # yolo_load
-        data_matrix[i, 7] += job[18]  # image_read
-        data_matrix[i, 8] += job[19]  # yolo_compute
-        data_matrix[i, 9] += job[20]  # process_results
-        data_matrix[i, 10] += job[21]  # image_write
-        data_matrix[i, 11] += job[22]  # write_back
-
-    total = np.sum(data_matrix, axis=0)
-    mean = total / n
-    variance = np.square(data_matrix - mean)
-    variance = np.sum(variance, axis=0) / n
-    sigma = np.sqrt(variance)  # population standard deviation
-    coeff_of_variation = sigma / mean
-
-    headers = ["full_job:", "wait:", "pod_creation:", "overhead:", "compute_total:", "compute_overhead:", "yolo_load:",
-               "image_read:", "yolo_compute:", "process_results:", "image_write:", "write_back:"]
-
-    with open("results/" + session_name + "/mask_statistics.txt", "w") as file:
-        for i in range(len(headers)):
-            file.write(headers[i])
-            file.write("\n\ttotal: " + str(round(total[i], 3)))
-            file.write("\n\tmean: " + str(round(mean[i], 3)))
-            file.write("\n\tpop. standard deviation: " + str(round(sigma[i], 3)))
-            file.write("\n\tcoefficient of variation: " + str(round(coeff_of_variation[i], 3)))
-            file.write("\n")
-
-    return
+# will recieve directory, subfolder and list of services
+def make_statistics(data):
+	
+	campaign_dir = "runs-results/10-seconds-vm"
+	subfolder = "full"
+	# service = "blur-faces"
+	service = "mask-detector"
+	
+	
+	# print(os.listdir(campaign_dir))
+	
+	data = {}
+	
+	for run in os.listdir(campaign_dir):
+		if "Run" in run:
+			filepath = os.path.join(campaign_dir, run, subfolder, service + "_jobs.csv")
+			for row in csv_to_list_of_dict(filepath):
+				data[row["job_name"]]= {
+							"wait": float(row["wait"]),
+							"pod_creation": float(row["pod_creation"]),
+							"overhead": float(row["overhead"]),
+							"compute_time": float(row["compute_time"]),
+							"write_back": float(row["write_back"])
+							}
+	
+	n = len(data)
+	data_matrix = np.zeros((n, 5))
+	
+	keys = list(data.keys())
+	
+	
+	for i in range(n):
+		
+		job = data[keys[i]]
+		
+		data_matrix[i, 0] += job["wait"]
+		data_matrix[i, 1] += job["pod_creation"]
+		data_matrix[i, 2] += job["overhead"]
+		data_matrix[i, 3] += job["compute_time"]
+		data_matrix[i, 4] += job["write_back"]
+		
+	print(data_matrix[0:10])
+	total = np.sum(data_matrix, axis=0)
+	print(total)
+	mean = total / n
+	mean += 0.0000000001
+	print(mean)
+	variance = np.square(data_matrix - mean)
+	variance = np.sum(variance, axis=0) / n
+	print(variance)
+	sigma = np.sqrt(variance)  # population standard deviation
+	coeff_of_variation = sigma / mean
+	print(coeff_of_variation)
+	
+	return

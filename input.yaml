@@ -32,12 +32,12 @@ configuration:
     max_memory_mb: 8192
   input_files:
     mc_alias: "minio-vm"
-    filename: "test_15_mins.mp4"
-    number_of_files: 10
+    filename: "Test-Video.mp4"
+    number_of_files: 15
     distribution: deterministic
     inter_upload_time: 0
   run:
-    name: "10-seconds-vm-version3"
+    name: "10-seconds-vm-15-files"
     description: ""
     repetitions: 3
     cooldown_time: 60
@@ -45,7 +45,7 @@ configuration:
   ml_library:
     use: True
     interpolation_values: [ 4.0, 12.0, 20.0, 28.0 ]
-    extrapolation_values: [ 20.0, 24.0, 28.0, 32.0 ]
+    extrapolation_values: [ 24.0, 28.0, 32.0 ]
   other:
     time_correction: 2
     test_single_components: True
