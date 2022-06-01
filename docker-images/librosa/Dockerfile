@@ -1,7 +1,7 @@
 FROM python:3.7.12-slim-buster
 
 RUN apt update && \
-    apt install -y --no-install-recommends libsndfile1 && \
+    apt install -y --no-install-recommends libsndfile1 libsndfile1-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

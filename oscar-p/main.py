@@ -10,7 +10,7 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
     recreate_output_buckets
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
     get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_interpolation_values, \
-    get_extrapolation_values
+    get_extrapolation_values, new_run_scheduler
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, merge_csv_of_service, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
@@ -106,7 +106,7 @@ def process_subfolder(results_dir, subfolder, services):
 
 
 def test():
-    final_processing()
+    new_run_scheduler()
     quit()
 
 

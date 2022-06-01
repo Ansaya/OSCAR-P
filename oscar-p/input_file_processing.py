@@ -7,9 +7,13 @@ from termcolor import colored
 from utils import get_valid_input, show_warning, show_error
 
 
-# receives the list of services, we should only have one empty "father" field (the first service)
-# returns True if workflow is consistent, False otherwise
 def consistency_check(services):
+    """
+    receives the list of services, we should only have one empty "father" field (the first service)
+    :param services: ordered list of services, each a dictionary containing name of the service (as string),
+            input bucket (as string) and output buckets (list of strings)
+    :returns: True if workflow is consistent, False otherwise
+    """
     root_found = False  # root being the node with "father" field empty
 
     for service in services:
@@ -223,7 +227,7 @@ def get_possible_parallelisms(total_nodes, max_cores):
 
 
 # alternative to run_scheduler that generates the list of runs automatically based on the parallelism array
-# todo add the possibility for a service to ignore the parallelism field
+# change how this behaves, use parallelism by default and overrides with fields from service if not empty
 def run_scheduler_parallel(parallelism, services):
     total_nodes, max_cores, max_memory_mb = get_worker_nodes_info()
     possible_parallelism = get_possible_parallelisms(total_nodes, max_cores)
@@ -260,6 +264,93 @@ def run_scheduler_parallel(parallelism, services):
             runs.append(run)
 
     return runs
+
+
+def new_run_scheduler():
+    total_nodes, max_cores, max_memory_mb = get_worker_nodes_info()
+    possible_parallelism = get_possible_parallelisms(total_nodes, max_cores)
+    
+    # todo move this to getters functions
+    with open("input.yaml", "r") as file:
+        script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
+        repetitions = script_config["run"]["repetitions"]
+        parallelism = script_config["run"]["parallelism"]
+        services_list = script_config["services"]
+        
+    i = 0
+    runs = []
+    for p in parallelism:
+        if p not in possible_parallelism.keys():
+            show_error("A parallelism of " + str(p) + " is not achieavable on this cluster")
+        else:
+            for s in services_list:
+                
+                name = list(s.keys())[0]
+                cpu = s[name]["cpu"]
+                print("cpu", cpu)
+                # if field is not empty ...
+                if not isinstance(cpu, type(None)):
+                    print(name, "not empty")
+                    
+                name = list(s.keys())[0]
+                cpu = possible_parallelism[p][0]
+                memory, _ = var_process(s[name]["memory_mb"], 0, 0)
+
+                s = {
+                    "name": name,
+                    "cpu": str(cpu),
+                    "memory": str(memory),
+                    "image": s[name]["image"],
+                    "script": s[name]["script"],
+                    "input_bucket": s[name]["input_bucket"],
+                    "output_buckets": s[name]["output_buckets"]
+                }
+                container_services.append(s)
+            run = {
+                "id": "Run #" + str(i + 1),
+                "nodes": possible_parallelism[p][1],
+                "services": container_services
+            }
+            i += 1
+            runs.append(run)
+        break
+
+    return runs
+    
+
+def set_services_for_run(services_list, parallelism_cores, parallelism_nodes):
+    """
+    :param services_list: list of services as red from input.yaml file
+    """
+    
+    for s in services_list:
+        name = list(s.keys())[0]  # needed to fetch the service name, ignore it
+        cpu = s[name]["cpu"]
+        
+        # if field is not empty uses this value
+        if not isinstance(cpu, type(None)):
+            cpu = s[name]["cpu"]  # todo remove, only temporary so that my neurons don't suicide when reading this
+        # todo need to use var process here too since it may receive an array
+        
+        # otherwise use the one calculated to achieve required parallelism
+        else:
+            cpu = parallelism_cores
+            
+        memory, _ = var_process(s[name]["memory_mb"], 0, 0)
+
+        s = {
+            "name": name,
+            "cpu": str(cpu),
+            "memory": str(memory),
+            "image": s[name]["image"],
+            "script": s[name]["script"],
+            "input_bucket": s[name]["input_bucket"],
+            "output_buckets": s[name]["output_buckets"]
+        }
+        container_services.append(s)
+    
+    return
+    
 
 
 # given two runs, it shows the difference in cpu and memory settings
@@ -307,6 +398,10 @@ def show_runs(base, nodes, repetitions):
         print(colored("Exiting...", "red"))
         quit()
 
+
+###############
+#   GETTERS   #
+###############
 
 def get_cluster_name():
     with open("input.yaml", "r") as file:

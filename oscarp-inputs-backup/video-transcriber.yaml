@@ -13,7 +13,7 @@ configuration:
     - librosa:
         cpu: 4.0
         memory_mb: 1024
-        image: scrapjack/librosa:latest
+        image: scrapjack/librosa:stable
         script: bash-scripts/librosa.sh
         input_bucket: input-librosa
         output_buckets:
@@ -72,6 +72,10 @@ configuration:
     repetitions: 1
     cooldown_time: 30
     parallelism: [ 1 ]
+  ml_library:
+    use: False
+    interpolation_values: [ 4.0, 12.0, 20.0, 28.0 ]
+    extrapolation_values: [ 20.0, 24.0, 28.0, 32.0 ]
   other:
     time_correction: 2
     test_single_components: False
