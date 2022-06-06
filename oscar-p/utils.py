@@ -120,17 +120,18 @@ def list_of_strings_to_file(list_of_strings, filepath):
 def auto_mkdir(new_dir):
     if not os.path.exists(new_dir):
         os.mkdir(new_dir)
-        
-        
+
+
 def csv_to_list_of_dict(filepath):
-	with open(filepath, mode='r') as file:
-		reader = csv.DictReader(file)
-		line_count = 1
-		list_of_dict = []
-		for row in reader:
-			list_of_dict.append(row)
-			line_count += 1	
-	return list_of_dict
+    with open(filepath, mode='r') as file:
+        reader = csv.DictReader(file)
+        line_count = 1
+        list_of_dict = []
+        for row in reader:
+            list_of_dict.append(row)
+            line_count += 1
+    return list_of_dict
+
 
 # OTHER UTILS
 

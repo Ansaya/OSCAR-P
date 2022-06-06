@@ -266,58 +266,7 @@ def run_scheduler_parallel(parallelism, services):
     return runs
 
 
-def new_run_scheduler():
-    total_nodes, max_cores, max_memory_mb = get_worker_nodes_info()
-    possible_parallelism = get_possible_parallelisms(total_nodes, max_cores)
-    
-    # todo move this to getters functions
-    with open("input.yaml", "r") as file:
-        script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
-        repetitions = script_config["run"]["repetitions"]
-        parallelism = script_config["run"]["parallelism"]
-        services_list = script_config["services"]
-        
-    i = 0
-    runs = []
-    for p in parallelism:
-        if p not in possible_parallelism.keys():
-            show_error("A parallelism of " + str(p) + " is not achieavable on this cluster")
-        else:
-            for s in services_list:
-                
-                name = list(s.keys())[0]
-                cpu = s[name]["cpu"]
-                print("cpu", cpu)
-                # if field is not empty ...
-                if not isinstance(cpu, type(None)):
-                    print(name, "not empty")
-                    
-                name = list(s.keys())[0]
-                cpu = possible_parallelism[p][0]
-                memory, _ = var_process(s[name]["memory_mb"], 0, 0)
-
-                s = {
-                    "name": name,
-                    "cpu": str(cpu),
-                    "memory": str(memory),
-                    "image": s[name]["image"],
-                    "script": s[name]["script"],
-                    "input_bucket": s[name]["input_bucket"],
-                    "output_buckets": s[name]["output_buckets"]
-                }
-                container_services.append(s)
-            run = {
-                "id": "Run #" + str(i + 1),
-                "nodes": possible_parallelism[p][1],
-                "services": container_services
-            }
-            i += 1
-            runs.append(run)
-        break
-
-    return runs
-    
-
+# todo useful?
 def set_services_for_run(services_list, parallelism_cores, parallelism_nodes):
     """
     :param services_list: list of services as red from input.yaml file
