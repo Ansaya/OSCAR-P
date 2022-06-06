@@ -4,6 +4,7 @@ import subprocess
 import time
 import json
 import csv
+import shutil
 
 from paramiko import SSHClient, AutoAddPolicy, RSAKey
 from termcolor import colored
@@ -131,6 +132,10 @@ def csv_to_list_of_dict(filepath):
             list_of_dict.append(row)
             line_count += 1
     return list_of_dict
+    
+
+def delete_directory(dir_path):
+    shutil.rmtree(dir_path)
 
 
 # OTHER UTILS

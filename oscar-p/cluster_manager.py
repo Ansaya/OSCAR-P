@@ -5,7 +5,7 @@ import yaml
 from termcolor import colored
 from input_file_processing import get_mc_alias, get_debug
 from utils import execute_command, configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
-    make_debug_info
+    make_debug_info, show_warning
 
 
 def remove_all_services():
@@ -141,12 +141,48 @@ def generate_fdl_single_service(service, cluster_name):
         yaml.dump(fdl_config, file)
 
 
-def apply_fdl_configuration():
-    print(colored("Adjusting OSCAR configuration...", "yellow"))
+def _apply_fdl_configuration():
     command = "oscar-p/oscar-cli apply oscar-p/FDL_configuration.yaml"
     get_command_output_wrapped(command)
-    print(colored("Done!", "green"))
     return
+
+
+def apply_fdl_configuration_wrapped(services):
+    """
+
+    :param services:
+    :return:
+    """
+
+    print(colored("Adjusting OSCAR configuration...", "yellow"))
+    while True:
+        _apply_fdl_configuration()
+        if verify_correct_fdl_deployment(services):
+            break
+    print(colored("Done!", "green"))
+
+
+def verify_correct_fdl_deployment(services):
+    """
+    after applying the FDL file, makes sure that all the required services are deployed
+    """
+
+    command = "oscar-p/oscar-cli service list"
+    output = get_command_output_wrapped(command)
+    
+    deployed_services = []
+
+    output.pop(0)
+    
+    for o in output:
+        deployed_services.append(o.split('\t')[0])
+    
+    for s in services:
+        if s["name"] not in deployed_services:
+            show_warning("Service " + s["name"] + " not deployed")
+            return False
+    
+    return True
 
 
 # returns a list of nodes, with status = off if cordoned or on otherwise

@@ -73,21 +73,21 @@ configuration:
   input_files:
     mc_alias: "minio-vm"
     filename: "test_charlie.mp4"
-    number_of_files: 1
+    number_of_files: 5
     distribution: deterministic
     inter_upload_time: 0
   run:
-    name: "video-searcher-parallelism-test"
+    name: "video-searcher"
     description: ""
-    repetitions: 1
+    repetitions: 3
     cooldown_time: 60
-    parallelism:
+    parallelism: [ 1, 2, 4, 8, 12, 16, 20, 24, 28, 32 ]
   ml_library:
-    use: False
+    use: True
     interpolation_values: [ 4.0, 12.0, 20.0, 28.0 ]
     extrapolation_values: [ 20.0, 24.0, 28.0, 32.0 ]
   other:
     time_correction: 2
-    test_single_components: True
+    test_single_components: False
     debug: False
  

@@ -5,8 +5,8 @@ from termcolor import colored
 
 from utils import auto_mkdir
 
-from MLlibrary import sequence_data_processing
-from MLlibrary.model_building.predictor import Predictor
+from aMLLibrary import sequence_data_processing
+from aMLLibrary.model_building.predictor import Predictor
 
 
 def run_mllibrary(results_dir):
@@ -52,17 +52,17 @@ def train_and_predict(csvs_dir, workdir):
             current_model = r.split('.')[0].split('_')[-1]
 
             # with SFS
-            config_file = "MLlibrary/MLlibrary-config-SFS.ini"
+            config_file = "aMLLibrary/aMLLibrary-config-SFS.ini"
             output_dir_sfs = workdir + current_model + "_model_SFS"
             train_models(config_file, training_set, output_dir_sfs)
 
             # without SFS
-            config_file = "MLlibrary/MLlibrary-config-noSFS.ini"
+            config_file = "aMLLibrary/aMLLibrary-config-noSFS.ini"
             output_dir_no_sfs = workdir + current_model + "_model_noSFS"
             train_models(config_file, training_set, output_dir_no_sfs)
 
             # prediction
-            config_file = "MLlibrary/MLlibrary-predict.ini"
+            config_file = "aMLLibrary/aMLLibrary-predict.ini"
             set_mllibrary_predict_path(config_file, test_set)
             make_prediction(config_file, output_dir_sfs)
             make_prediction(config_file, output_dir_no_sfs)
@@ -114,7 +114,7 @@ def set_mllibrary_predict_path(config_file, filepath):
 def make_prediction(config_file, workdir):
     """
     this functions makes predictions by using the trained models
-    :param config_file: points to MLlibrary-predict.ini
+    :param config_file: points to aMLLibrary-predict.ini
     :param workdir: points to the currently considered model (e.g. Models/Interpolation/full_model_noSFS)
     """
 

@@ -1,10 +1,10 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '0.9'
+      cpu: '3.9'
       image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
-      - path: dead-start
+      - path: input-video
         storage_provider: minio.default
       memory: 1024Mi
       name: ffmpeg0
@@ -14,3 +14,73 @@ functions:
         storage_provider: minio.default
         suffix: []
       script: bash-scripts/ffmpeg0.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: scrapjack/librosa:2.0
+      input:
+      - path: input-librosa
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: librosa
+      output:
+      - path: output-librosa
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/librosa.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: linuxserver/ffmpeg:amd64-version-4.4-cli
+      input:
+      - path: output-librosa
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: ffmpeg1
+      output:
+      - path: input-clips
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/ffmpeg1.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: linuxserver/ffmpeg:amd64-version-4.4-cli
+      input:
+      - path: input-clips
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: ffmpeg2
+      output:
+      - path: input-deepspeech
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/ffmpeg2.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: scrapjack/deepspeech:stable
+      input:
+      - path: input-deepspeech
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: deepspeech
+      output:
+      - path: output-deepspeech
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/deepspeech.sh
+  - oscar-vm:
+      cpu: '3.9'
+      image: ubuntu:20.04
+      input:
+      - path: output-deepspeech
+        storage_provider: minio.default
+      memory: 1024Mi
+      name: ubuntu
+      output:
+      - path: results
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/ubuntu.sh

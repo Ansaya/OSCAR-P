@@ -1,7 +1,7 @@
 import os
 
-from MLlibrary import sequence_data_processing
-from MLlibrary.model_building.predictor import Predictor
+from aMLLibrary import sequence_data_processing
+from aMLLibrary.model_building.predictor import Predictor
 
 
 def auto_mkdir(new_dir):
@@ -17,9 +17,9 @@ def train_models(config_file, output_dir):
 def make_predictions(config_file, workdir):
     
     regressors_list = ["DecisionTree", "LRRidge", "RandomForest", "XGBoost"]
-    regressors_list = ["DecisionTree", "LRRidge", "RandomForest", "XGBoost"]
     
     for regressor_name in regressors_list:
+        print(regressor_name)
         regressor_path = workdir + "/" + regressor_name + ".pickle"
     
         output_dir = workdir + "/output_predict_" + regressor_name
@@ -37,7 +37,8 @@ auto_mkdir(output_dir_SFS)
 output_dir_noSFS = "new-results/Test-1/Results/noSFS"
 auto_mkdir(output_dir_noSFS)
 
-# train_models(config_file_SFS, output_dir_SFS)
-# train_models(config_file_noSFS, output_dir_noSFS)
+train_models(config_file_SFS, output_dir_SFS)
+train_models(config_file_noSFS, output_dir_noSFS)
 
 make_predictions("new-results/Test-1/MLlibrary-predict.ini", output_dir_noSFS)
+make_predictions("new-results/Test-1/MLlibrary-predict.ini", output_dir_SFS)
