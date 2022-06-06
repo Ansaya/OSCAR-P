@@ -28,17 +28,19 @@ def make_predictions(config_file, workdir):
         predictor_obj.predict(config_file=config_file, mape_to_file=True)
         
 
-config_file_SFS = "new-results/Test-1/MLlibrary-config-SFS.ini"
-config_file_noSFS = "new-results/Test-1/MLlibrary-config-noSFS.ini"
-results_dir = "new-results/Test-1/Results/"
+main_directory = "new-results/Test-2/"
+config_file_SFS = main_directory + "aMLLibrary-config-SFS.ini"
+config_file_noSFS = main_directory + "aMLLibrary-config-noSFS.ini"
+config_file_predict = main_directory + "aMLLibrary-predict.ini"
+results_dir = main_directory + "Results/"
 auto_mkdir(results_dir)
-output_dir_SFS = "new-results/Test-1/Results/SFS"
+output_dir_SFS = main_directory + "Results/SFS"
 auto_mkdir(output_dir_SFS)
-output_dir_noSFS = "new-results/Test-1/Results/noSFS"
+output_dir_noSFS = main_directory + "Results/noSFS"
 auto_mkdir(output_dir_noSFS)
 
 train_models(config_file_SFS, output_dir_SFS)
 train_models(config_file_noSFS, output_dir_noSFS)
 
-make_predictions("new-results/Test-1/MLlibrary-predict.ini", output_dir_noSFS)
-make_predictions("new-results/Test-1/MLlibrary-predict.ini", output_dir_SFS)
+make_predictions(config_file_predict, output_dir_noSFS)
+make_predictions(config_file_predict, output_dir_SFS)
