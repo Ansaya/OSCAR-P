@@ -1,7 +1,7 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
       - path: input-video
@@ -15,7 +15,7 @@ functions:
         suffix: []
       script: bash-scripts/ffmpeg0.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: scrapjack/librosa:2.0
       input:
       - path: input-librosa
@@ -29,7 +29,7 @@ functions:
         suffix: []
       script: bash-scripts/librosa.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
       - path: output-librosa
@@ -43,7 +43,7 @@ functions:
         suffix: []
       script: bash-scripts/ffmpeg1.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: linuxserver/ffmpeg:amd64-version-4.4-cli
       input:
       - path: input-clips
@@ -57,7 +57,7 @@ functions:
         suffix: []
       script: bash-scripts/ffmpeg2.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: scrapjack/deepspeech:stable
       input:
       - path: input-deepspeech
@@ -71,7 +71,7 @@ functions:
         suffix: []
       script: bash-scripts/deepspeech.sh
   - oscar-vm:
-      cpu: '3.9'
+      cpu: '0.9'
       image: ubuntu:20.04
       input:
       - path: output-deepspeech

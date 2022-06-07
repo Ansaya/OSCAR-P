@@ -95,6 +95,7 @@ def final_processing():
 
 
 def process_subfolder(results_dir, subfolder, services):
+    return
     df, adf = prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services)
     make_statistics(campaign_dir, results_dir, subfolder, services)
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
@@ -118,7 +119,7 @@ show_runs(base, nodes, repetitions)
 
 campaign_dir = "runs-results/" + campaign_name
 
-# test()
+test()
 
 
 # todo too bulky, move to function
@@ -141,8 +142,8 @@ else:
     os.mkdir(campaign_dir)
     os.system("cp input.yaml " + campaign_dir + "/input.yaml")
 
-cluster_name = get_cluster_name()
 # todo all oscar command should specify on which cluster to execute
+cluster_name = get_cluster_name()
 
 for i in range(n, len(runs)):
     run = runs[i]
