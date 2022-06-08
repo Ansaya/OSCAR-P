@@ -1,16 +1,16 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '0.9'
-      image: linuxserver/ffmpeg:amd64-version-4.4-cli
+      cpu: '3.9'
+      image: ubuntu:20.04
       input:
       - path: dead-start
         storage_provider: minio.default
       memory: 1024Mi
-      name: ffmpeg0
+      name: ubuntu
       output:
-      - path: input-librosa
+      - path: results
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: bash-scripts/ffmpeg0.sh
+      script: bash-scripts/ubuntu.sh

@@ -167,6 +167,7 @@ def verify_correct_fdl_deployment(services):
     after applying the FDL file, makes sure that all the required services are deployed
     """
 
+    print(colored("Checking correct deployment...", "yellow"))
     command = "oscar-p/oscar-cli service list"
     output = get_command_output_wrapped(command)
     
@@ -181,6 +182,8 @@ def verify_correct_fdl_deployment(services):
         if s["name"] not in deployed_services:
             show_warning("Service " + s["name"] + " not deployed")
             return False
+        else:
+            print("Service " + s["name"] + " deployed")
     
     return True
 
