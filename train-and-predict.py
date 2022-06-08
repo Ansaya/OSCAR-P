@@ -28,7 +28,7 @@ def make_predictions(config_file, workdir):
         predictor_obj.predict(config_file=config_file, mape_to_file=True)
         
 
-main_directory = "new-results/Test-3/"
+main_directory = "ML-results/Test-3/"
 config_file_SFS = main_directory + "aMLLibrary-config-SFS.ini"
 config_file_noSFS = main_directory + "aMLLibrary-config-noSFS.ini"
 config_file_predict = main_directory + "aMLLibrary-predict.ini"

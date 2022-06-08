@@ -95,7 +95,6 @@ def final_processing():
 
 
 def process_subfolder(results_dir, subfolder, services):
-    return
     df, adf = prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services)
     make_statistics(campaign_dir, results_dir, subfolder, services)
     plot_runtime_core_graphs(results_dir, subfolder, df, adf)
@@ -105,8 +104,43 @@ def process_subfolder(results_dir, subfolder, services):
     save_dataframes(results_dir, subfolder, df, adf)
 
 
+def manage_campaign_dir():
+    """
+    if the campaign_dir already exists, and a "Results" folder is present, it exits,
+    otherwise it finds the last run (i.e. "Run #11"), it deletes it (it may have failed) and resumes from there
+    if the campaign_dir doesn't exist it creates it and starts as normal
+    :return: the index of the next run to execute; this is the index from the list "runs", not the run id (i.e. run
+            with index 0 has id "Run #1")
+    """
+    if os.path.exists(campaign_dir) and os.path.isdir(campaign_dir):
+        folder_list = os.listdir(campaign_dir)
+        if "Results" in folder_list:
+            show_error("Folder exists, exiting.")
+            quit()
+
+        show_warning("Folder exists, resuming...")
+        folder_list.remove("input.yaml")
+
+        # return len(folder_list)  # todo temporary, use for the long blur-faces then remove
+
+        n = len(folder_list) - 1
+
+        last_run = campaign_dir + "/" + runs[n]["id"]
+        delete_directory(last_run)
+
+    else:
+        n = 0
+        os.mkdir(campaign_dir)
+        os.system("cp input.yaml " + campaign_dir + "/input.yaml")
+
+    return n
+
+
 def test():
-    final_processing()
+    service_name = "mask-detector"
+    service = get_service_by_name(service_name, run["services"])
+    wait_services_completion([service])
+    end_run_service(service)
     quit()
 
 
@@ -119,33 +153,15 @@ show_runs(base, nodes, repetitions)
 
 campaign_dir = "runs-results/" + campaign_name
 
-test()
+# run = runs[0]
+# test()
 
-
-# todo too bulky, move to function
-if os.path.exists(campaign_dir) and os.path.isdir(campaign_dir):
-    folder_list = os.listdir(campaign_dir)
-    if "Results" in folder_list:
-        show_error("Folder exists, exiting.")
-        quit()
-    
-    show_warning("Folder exists, resuming...")
-    folder_list.remove("input.yaml")
-    
-    n = len(folder_list) - 1
-    
-    last_run = campaign_dir + "/" + runs[n]["id"]
-    delete_directory(last_run)
-    
-else:
-    n = 0
-    os.mkdir(campaign_dir)
-    os.system("cp input.yaml " + campaign_dir + "/input.yaml")
+s = manage_campaign_dir()
 
 # todo all oscar command should specify on which cluster to execute
 cluster_name = get_cluster_name()
 
-for i in range(n, len(runs)):
+for i in range(s, len(runs)):
     run = runs[i]
     print(colored("\nStarting " + run["id"] + " of " + str(len(runs)), "blue"))
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory

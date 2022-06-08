@@ -77,17 +77,17 @@ configuration:
     distribution: deterministic
     inter_upload_time: 0
   run:
-    name: "video-searcher"
+    name: "video-searcher-parallelism-test"
     description: ""
     repetitions: 3
     cooldown_time: 60
-    parallelism: [ 1, 2, 4, 8, 12, 16, 20, 24, 28, 32 ]
+    parallelism:
   ml_library:
-    use: True
+    use: False
     interpolation_values: [ 4.0, 12.0, 20.0, 28.0 ]
     extrapolation_values: [ 20.0, 24.0, 28.0, 32.0 ]
   other:
     time_correction: 2
-    test_single_components: False
+    test_single_components: True
     debug: False
  

@@ -8,7 +8,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
-from input_file_processing import get_interpolation_values, get_extrapolation_values
+from input_file_processing import get_interpolation_values, get_extrapolation_values, get_test_single_components
 from utils import show_error, list_of_strings_to_file, auto_mkdir, csv_to_list_of_dict
 
 
@@ -69,7 +69,7 @@ def calculate_runtime(working_dir, services):
     first, last = 0, 0
     for service in services:
         service_name = service["name"]
-        with open(working_dir + "/time_table_" + service_name + ".pkl", "rb") as file:
+        with open(working_dir + "/time_table_" + service_name + ".pkl", "rb") as file:  # todo move this to utils
             timelist = pickle.load(file)
 
         if len(timelist) != 0:
@@ -243,9 +243,11 @@ def plot_ml_predictions_graphs(results_dir, services):
 
     # first let's make a list of the "subfolders" we'll need to process
     subfolders_list = ["full"]
-
-    for s in services:
-        subfolders_list.append(s["name"])
+    
+    # if test_single_components is true, add them to the list
+    if get_test_single_components():
+        for s in services:
+            subfolders_list.append(s["name"])
 
     interpolation_test_values = get_interpolation_values()
     extrapolation_test_values = get_extrapolation_values()
@@ -290,6 +292,7 @@ def plot_ml_predictions_graph(graphs_dir, subfolder, test_values, dictionary, df
     fig.write_image(graphs_dir + "ml_" + operation + "_" + subfolder + ".png")
 
 
+# todo move this to utils
 def load_dataframes(results_dir, subfolder):
     """
     loads the dataframe and averaged_dataframe for a specific subfolder of a specific campaign
@@ -334,7 +337,7 @@ def find_best_predictions(results_dir, subfolder):
 def find_best_prediction(workdir, summary_path):
     """
     called by find_best_predictions, given two model directories (each contains 4 regressors) returns the predictions of the best model
-    :param work_dir: path to two directories of the currently considered models (with and without SFS)
+    :param workdir: path to two directories of the currently considered models (with and without SFS)
     :param summary_path: path to the summary text file
     :return: a dictionary containing info on predictions such as the name of the best model, its mape and the predicted values
     """
@@ -367,7 +370,7 @@ def find_best_prediction(workdir, summary_path):
 def find_best_model(workdir):
     """
     called by find_best_prediction, returns the name of the best model, its mape, and a summary (as list of string) containing the mape of all other models
-    :param work_dir: path to two directories of the currently considered models (with and without SFS)
+    :param workdir: path to two directories of the currently considered models (with and without SFS)
     :returns: name of best model, best mape, summary of other models performance
     """
 
@@ -441,6 +444,7 @@ def make_runtime_core_csv_for_ml(results_dir, subfolder, data, averaged_data, op
                 file.write(str(runtime) + "," + str(core) + "," + str(log_core) + "\n")
 
 
+# todo belongs to utils
 def save_dataframes(results_dir, subfolder, df, adf):
     """
     saves the two dataframes to file so that they can be reused (when making the prediction graphs for example)
