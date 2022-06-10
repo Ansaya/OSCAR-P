@@ -121,7 +121,7 @@ def manage_campaign_dir():
         show_warning("Folder exists, resuming...")
         folder_list.remove("input.yaml")
 
-        # return len(folder_list)  # todo temporary, use for the long blur-faces then remove
+        return len(folder_list)  # todo temporary, use for the long blur-faces then remove
 
         n = len(folder_list) - 1
 
@@ -171,4 +171,4 @@ for i in range(s, len(runs)):
     end_run_full()
     test_single_services()
 
-final_processing()
+# final_processing()

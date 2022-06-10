@@ -1,93 +1,52 @@
 configuration:
   services:
-    - ffmpeg0:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: linuxserver/ffmpeg:amd64-version-4.4-cli
-        script: bash-scripts/ffmpeg0.sh
-        input_bucket: input-video
-        output_buckets:
-          - path: input-librosa
-            prefix: [ ]
-            suffix: [ ]
-    - librosa:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: scrapjack/librosa:2.0
-        script: bash-scripts/librosa.sh
-        input_bucket: input-librosa
-        output_buckets:
-          - path: output-librosa
-            prefix: [ ]
-            suffix: [ ]
-    - ffmpeg1:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: linuxserver/ffmpeg:amd64-version-4.4-cli
-        script: bash-scripts/ffmpeg1.sh
-        input_bucket: output-librosa
-        output_buckets:
-          - path: input-clips
-            prefix: [ ]
-            suffix: [ ]
-    - ffmpeg2:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: linuxserver/ffmpeg:amd64-version-4.4-cli
-        script: bash-scripts/ffmpeg2.sh
-        input_bucket: input-clips
-        output_buckets:
-          - path: input-deepspeech
-            prefix: [ ]
-            suffix: [ ]
-    - deepspeech:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: scrapjack/deepspeech:stable
-        script: bash-scripts/deepspeech.sh
-        input_bucket: input-deepspeech
-        output_buckets:
-          - path: output-deepspeech
-            prefix: [ ]
-            suffix: [ ]
-    - ubuntu:
-        cpu: [ 0.9, 1.9, 3.9 ]
-        memory_mb: 1024
-        image: ubuntu:20.04
-        script: bash-scripts/ubuntu.sh
-        input_bucket: output-deepspeech
-        output_buckets:
-          - path: results
-            prefix: [ ]
-            suffix: [ ]
+  - dummy:
+      cpu: 0.9
+      memory_mb: 1024
+      image: scrapjack/blurry-faces-modded:stable
+      script: bash-scripts/blurry-faces.sh
+      input_bucket: input-videos
+      output_buckets:
+        - path: blurred-images
+          prefix: [ ]
+          suffix: [ ]
+  - mask-detector:
+      cpu: 0.9
+      memory_mb: 1024
+      image: scrapjack/mask-detector-modded:stable
+      script: bash-scripts/mask-detector.sh
+      input_bucket: blurred-images
+      output_buckets:
+        - path: results
+          prefix: [ ]
+          suffix: [ ]
   cluster:
     name: "oscar-vm"
     ip_address: 158.42.105.149
     port: 10022
     username: "aisprint"
   worker_nodes:
-    nodes: 5
+    nodes: 1
     total_nodes: 8
     max_cpu_cores: 4.0
     max_memory_mb: 8192
   input_files:
     mc_alias: "minio-vm"
-    filename: "test_charlie.mp4"
+    filename: "Test-video.mp4"
     number_of_files: 5
     distribution: deterministic
     inter_upload_time: 0
   run:
-    name: "video-searcher-parallelism-test"
+    name: "annotations-test"
     description: ""
     repetitions: 3
-    cooldown_time: 60
-    parallelism:
+    cooldown_time: 30
+    parallelism: [ 2 ]
   ml_library:
     use: False
     interpolation_values: [ 4.0, 12.0, 20.0, 28.0 ]
     extrapolation_values: [ 20.0, 24.0, 28.0, 32.0 ]
   other:
     time_correction: 2
-    test_single_components: True
+    test_single_components: False
     debug: False
- 
