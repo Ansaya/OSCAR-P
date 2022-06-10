@@ -1,0 +1,2 @@
+[console_scripts]
+aisprint = aisprint.bin.aisprint_cli:aisprint_cli
