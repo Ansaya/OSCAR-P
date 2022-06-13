@@ -4,7 +4,7 @@ import yaml
 
 from termcolor import colored
 from input_file_processing import get_mc_alias, get_debug
-from utils import execute_command, configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
+from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
     make_debug_info, show_warning
 
 
@@ -16,7 +16,7 @@ def remove_all_services():
     for service in services:
         service = service.split()[0]
         command = "oscar-p/oscar-cli service remove " + service
-        execute_command(command)
+        get_command_output_wrapped(command)
     print(colored("Done!", "green"))
 
 
@@ -30,7 +30,7 @@ def remove_all_buckets():
         if bucket != "storage/":
             bucket = mc_alias + "/" + bucket
             command = "oscar-p/mc rb " + bucket + " --force"
-            execute_command(command)
+            get_command_output_wrapped(command)
     print(colored("Done!", "green"))
     return
 
@@ -39,7 +39,7 @@ def create_bucket(bucket):
     print(colored("Recreating bucket " + bucket + "...", "yellow"))
     mc_alias = get_mc_alias()
     command = "oscar-p/mc mb " + mc_alias + "/" + bucket
-    execute_command(command)
+    get_command_output_wrapped(command)
     print(colored("Done!", "green"))
     return
 
@@ -48,9 +48,9 @@ def recreate_bucket(bucket):
     mc_alias = get_mc_alias()
     bucket = mc_alias + "/" + bucket
     command = "oscar-p/mc rb " + bucket + " --force"
-    execute_command(command)
+    get_command_output_wrapped(command)
     command = "oscar-p/mc mb " + bucket
-    execute_command(command)
+    get_command_output_wrapped(command)
     return
 
 
@@ -69,7 +69,7 @@ def clean_all_logs():
         service = service.split()[0]
         print(colored("Cleaning logs of service " + service + "...", "yellow"))
         command = "oscar-p/oscar-cli service logs remove " + service + " --all"
-        execute_command(command)
+        get_command_output_wrapped(command)
         print(colored("Done!", "green"))
 
     return

@@ -14,4 +14,5 @@ python mask-detector-image.py --image "$INPUT_FILE_PATH" --output "$OUTPUT_IMAGE
 
 TMP=$(cat /proc/sys/kernel/random/uuid | sed 's/[-]//g' | head -c 5)
 
-cp "influxdb.csv" "$TMP_OUTPUT_DIR/mask_${TMP}_influxdb.csv"
+# cp "influxdb.csv" "$TMP_OUTPUT_DIR/mask_${TMP}_influxdb.csv"
+cp "influxdb.csv" "$TMP_OUTPUT_DIR/mask_${SUBFOLDER_NAME}_${IMAGE_NAME}_influxdb.csv"

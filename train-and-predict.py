@@ -28,7 +28,7 @@ def make_predictions(config_file, workdir):
         predictor_obj.predict(config_file=config_file, mape_to_file=True)
         
 
-main_directory = "ML-results/mask-detector/"
+main_directory = "ML-results/extrapolate_20_files/mask-detector/"
 config_file_SFS = main_directory + "aMLLibrary-config-SFS.ini"
 config_file_noSFS = main_directory + "aMLLibrary-config-noSFS.ini"
 config_file_predict = main_directory + "aMLLibrary-predict.ini"
@@ -39,8 +39,8 @@ auto_mkdir(output_dir_SFS)
 output_dir_noSFS = main_directory + "Results/noSFS"
 auto_mkdir(output_dir_noSFS)
 
-# train_models(config_file_noSFS, output_dir_noSFS)
-# train_models(config_file_SFS, output_dir_SFS)
+train_models(config_file_noSFS, output_dir_noSFS)
+train_models(config_file_SFS, output_dir_SFS)
 
 make_predictions(config_file_predict, output_dir_noSFS)
 make_predictions(config_file_predict, output_dir_SFS)

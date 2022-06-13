@@ -4,9 +4,10 @@ import time
 import numpy as np
 
 from termcolor import colored
+from tqdm import tqdm
 
 from input_file_processing import get_mc_alias
-from utils import execute_command, get_command_output_wrapped, show_error
+from utils import get_command_output_wrapped, show_error, auto_mkdir
 
 
 # wait between the upload of two files, to emulate arrival rate
@@ -43,7 +44,7 @@ def move_file_between_buckets(origin_file, origin_bucket, destination_file, dest
     origin = mc_alias + "/" + origin_bucket + "/" + origin_file
     destination = mc_alias + "/" + destination_bucket + "/" + destination_file
     command = "oscar-p/mc cp " + origin + " " + destination
-    execute_command(command)
+    get_command_output_wrapped(command)
     return
 
 
@@ -53,7 +54,7 @@ def move_whole_bucket(origin_bucket, destination_bucket):
     origin = mc_alias + "/" + origin_bucket
     destination = mc_alias + "/" + destination_bucket
     command = "oscar-p/mc cp " + origin + " " + destination + " -r"
-    execute_command(command)
+    get_command_output_wrapped(command)
     print(colored("Done!", "green"))
     return
 
@@ -99,19 +100,40 @@ def wait_services_completion(services):
         service_name = service["name"]
         print(colored("Waiting for service " + service_name + " completion...", "yellow"))
         time.sleep(sleep_interval)
-
+        
+        job_list = get_jobs_list(service_name)
+        pbar = tqdm(total=len(job_list))
+        
         while not completed:
-            job_list = get_jobs_list(service_name)
+            i = len(job_list)
             if job_list:  # means list not empty
                 completed = True
                 for j in job_list:
                     if j["status"] != "Succeeded":
                         completed = False
+                        i -= 1
                     if j["status"] == "Failed":
                         show_error("Job " + j["name"] + " failed")
                         completed = False
                         quit()
             if not completed:
+                pbar.n = i
+                pbar.refresh()
                 time.sleep(increment_sleep(sleep_interval))
+                job_list = get_jobs_list(service_name)
+        pbar.close()
         print(colored("Service " + service_name + " completed!", "green"))
     return
+    
+
+def download_bucket(working_dir, bucket_name):
+    print(colored("Downloading bucket...", "yellow"))
+    mc_alias = get_mc_alias()
+    origin = mc_alias + "/" + bucket_name
+    destination = working_dir + "/" + bucket_name
+    auto_mkdir(destination)
+    command = "oscar-p/mc cp " + origin + " " + destination + " -r"
+    get_command_output_wrapped(command)
+    print(colored("Done!", "green"))
+    
+

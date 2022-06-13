@@ -19,4 +19,5 @@ done
 
 TMP=$(cat /proc/sys/kernel/random/uuid | sed 's/[-]//g' | head -c 5)
 
-cp "influxdb.csv" "$TMP_OUTPUT_DIR/blur_${TMP}_influxdb.csv"
+# cp "influxdb.csv" "$TMP_OUTPUT_DIR/blur_${TMP}_influxdb.csv"
+cp "influxdb.csv" "$TMP_OUTPUT_DIR/blur_${SUBFOLDER_NAME}_influxdb.csv"

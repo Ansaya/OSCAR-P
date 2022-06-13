@@ -58,7 +58,7 @@ configuration:
   run:
     name: "annotations-test"
     description: ""
-    repetitions: 1
+    repetitions: 15
     cooldown_time: 30
     parallelism: [ 4 ]
   ml_library:

@@ -12,16 +12,9 @@ from termcolor import colored
 
 # CLI utils
 
-# todo should replace all usage with get_command_output_wrapped where error control is needed (which should be always)
-def execute_command(command):
-    p = subprocess.Popen(command.split())
-    p.wait()
-    return
-
-
 # execute a command externally, returns the output lines and errors
 # todo should always use the wrapped version
-def get_command_output(command):
+def _get_command_output(command):
     output = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     lines = []
     for line in output.stdout.readlines():
@@ -38,7 +31,7 @@ def get_command_output(command):
 
 def get_command_output_wrapped(command):
     for t in [5, 5, 10, 15, 30, 60, 120, 5*60, 10*60]:
-        lines, errors = get_command_output(command)
+        lines, errors = _get_command_output(command)
         if errors:  # empty list equals to False
             show_warning("Errors encountered, retrying in " + str(t) + " seconds")
             for e in errors:

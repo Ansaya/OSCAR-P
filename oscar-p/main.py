@@ -10,14 +10,13 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
     recreate_output_buckets
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
     get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library
-from mllibrary_manager import run_mllibrary
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
 from retrieve_logs import pull_logs
-from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket
+from run_manager import move_files_to_input_bucket, wait_services_completion, move_whole_bucket, download_bucket
 from utils import show_error, auto_mkdir, show_warning, delete_directory
-
+# from mllibrary_manager import run_mllibrary
 
 def prepare_cluster():
     remove_all_services()
@@ -37,6 +36,7 @@ def end_run_full():
     os.mkdir(working_dir)
     pull_logs(working_dir, ordered_services)
     make_csv_table(working_dir, run["services"], run["nodes"])
+    download_bucket(working_dir, "database")
 
 
 def test_single_services():
@@ -121,7 +121,7 @@ def manage_campaign_dir():
         show_warning("Folder exists, resuming...")
         folder_list.remove("input.yaml")
 
-        return len(folder_list)  # todo temporary, use for the long blur-faces then remove
+        # return len(folder_list)  # todo temporary, use for the long blur-faces then remove
 
         n = len(folder_list) - 1
 
