@@ -2,60 +2,15 @@ functions:
   oscar:
   - oscar-vm:
       cpu: '0.9'
-      image: scrapjack/blurry-faces-modded:latest
+      image: scrapjack/mask-detector-modded:stable
       input:
-      - path: input-videos
-        storage_provider: minio.default
-      memory: 1024Mi
-      name: blur-faces
-      output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
-      - path: blurred-images
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .jpg
-      script: bash-scripts/blurry-faces-annotated.sh
-  - oscar-vm:
-      cpu: '0.9'
-      image: scrapjack/mask-detector-modded:latest
-      input:
-      - path: blurred-images
+      - path: dead-start
         storage_provider: minio.default
       memory: 1024Mi
       name: mask-detector
       output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
       - path: results
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .jpg
-      script: bash-scripts/mask-detector-annotated.sh
-  - oscar-vm:
-      cpu: '0.9'
-      image: scrapjack/dummy:stable
-      input:
-      - path: results
-        storage_provider: minio.default
-      memory: 1024Mi
-      name: dummy
-      output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
-      - path: trash
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: bash-scripts/dummy.sh
+      script: bash-scripts/mask-detector.sh

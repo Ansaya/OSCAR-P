@@ -116,9 +116,9 @@ def wait_services_completion(services):
                         show_error("Job " + j["name"] + " failed")
                         completed = False
                         quit()
+            pbar.n = i
+            pbar.refresh()
             if not completed:
-                pbar.n = i
-                pbar.refresh()
                 time.sleep(increment_sleep(sleep_interval))
                 job_list = get_jobs_list(service_name)
         pbar.close()
@@ -126,11 +126,10 @@ def wait_services_completion(services):
     return
     
 
-def download_bucket(working_dir, bucket_name):
+def download_bucket(destination, bucket_name):
     print(colored("Downloading bucket...", "yellow"))
     mc_alias = get_mc_alias()
     origin = mc_alias + "/" + bucket_name
-    destination = working_dir + "/" + bucket_name
     auto_mkdir(destination)
     command = "oscar-p/mc cp " + origin + " " + destination + " -r"
     get_command_output_wrapped(command)

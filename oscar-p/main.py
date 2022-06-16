@@ -36,7 +36,7 @@ def end_run_full():
     os.mkdir(working_dir)
     pull_logs(working_dir, ordered_services)
     make_csv_table(working_dir, run["services"], run["nodes"])
-    download_bucket(working_dir, "database")
+    # download_bucket(campaign_dir + "/Database", "database")
 
 
 def test_single_services():
@@ -121,7 +121,7 @@ def manage_campaign_dir():
         show_warning("Folder exists, resuming...")
         folder_list.remove("input.yaml")
 
-        # return len(folder_list)  # todo temporary, use for the long blur-faces then remove
+        return len(folder_list)  # todo temporary, use for the long blur-faces then remove
 
         n = len(folder_list) - 1
 
@@ -167,8 +167,8 @@ for i in range(s, len(runs)):
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
 
     prepare_cluster()
-    start_run_full()
-    end_run_full()
+    # start_run_full()
+    # end_run_full()
     test_single_services()
 
 # final_processing()
