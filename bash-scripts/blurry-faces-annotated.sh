@@ -4,6 +4,8 @@ VIDEO_NAME=`basename "$INPUT_FILE_PATH"`
 SUBFOLDER_NAME=`echo "$VIDEO_NAME" | cut -f 1 -d '.'`
 OUTPUT_SUBFOLDER="$TMP_OUTPUT_DIR/$SUBFOLDER_NAME"
 
+echo $EVENT
+
 mkdir "$OUTPUT_SUBFOLDER"
 
 echo "SCRIPT: Analyzing file '$INPUT_FILE_PATH', saving the output images in '$OUTPUT_SUBFOLDER'"

@@ -1,7 +1,7 @@
 configuration:
   services:
   - blur-faces:
-      cluster: ["vm_cluster", "raspi_cluster"]
+      cluster: ["raspi_cluster", "vm_cluster"]
       cpu: 0.9
       memory_mb: 1024
       image_x86: scrapjack/blurry-faces-modded:stable
@@ -13,7 +13,7 @@ configuration:
           prefix: [ ]
           suffix: [ ]
   - mask-detector:
-      cluster: ["vm_cluster", aws_cluster]
+      cluster: "vm_cluster"
       cpu: 0.9
       memory_mb: 1024
       image_x86: scrapjack/mask-detector-modded:stable
@@ -51,7 +51,7 @@ configuration:
               username: "aisprint"
               architecture: x86
               active_nodes: [3, 4]
-              total_nodes: 5
+              total_nodes: 8
               max_cpu_cores: 4.0
               max_memory_mb: 8192
           - aws_cluster:
@@ -77,7 +77,7 @@ configuration:
     description: ""
     repetitions: 3
     cooldown_time: 60
-    parallelism: [1, 2, 4, 8]
+    parallelism: [1, 2, 4, 7, 8, 32]
   other:
     time_correction: 1
     test_single_components: True

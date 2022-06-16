@@ -55,6 +55,15 @@ def show_error(message):
     print(colored("\nError: " + message, "red"))
 
 
+def show_fatal_error(message):
+    """
+    prints an unrecoverable error message and exits
+    :param message: error message
+    """
+
+    show_error(message)
+    quit()
+
 def show_debug_info(message):
     from input_file_processing import get_debug
 

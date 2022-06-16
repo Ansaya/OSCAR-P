@@ -9,7 +9,7 @@ from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_con
     generate_fdl_single_service, remove_all_services, create_bucket, apply_fdl_configuration_wrapped, \
     recreate_output_buckets
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
-    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library
+    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_clusters_info
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
@@ -144,12 +144,18 @@ def test():
     quit()
 
 
-ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
-show_workflow(ordered_services)
+# ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
+# show_workflow(ordered_services)
 
-base, runs, nodes = run_scheduler()
+clusters = get_clusters_info()
+
+base, runs, nodes = run_scheduler(clusters)
+
+quit()
 campaign_name, repetitions, cooldown = get_run_info()
 show_runs(base, nodes, repetitions)
+
+quit()
 
 campaign_dir = "runs-results/" + campaign_name
 
@@ -167,8 +173,8 @@ for i in range(s, len(runs)):
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
 
     prepare_cluster()
-    # start_run_full()
-    # end_run_full()
+    start_run_full()
+    end_run_full()
     test_single_services()
 
-# final_processing()
+final_processing()
