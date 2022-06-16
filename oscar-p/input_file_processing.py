@@ -142,7 +142,7 @@ def var_process(x, i, cont):
 # "base" is a basic skeleton list of runs (if a run must be repeated twice, it shows only once in base)
 # "runs" is the full list of runs, including repetitions (implemented to add state saving later on)
 # "nodes" is just the number of nodes
-def run_scheduler(clusters):
+def run_scheduler():
     with open("demo.yaml", "r") as file:
         script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
         repetitions = script_config["run"]["repetitions"]
@@ -150,7 +150,9 @@ def run_scheduler(clusters):
         services = script_config["services"]
 
     base = cycle_through_clusters(services, parallelism)
-    runs = base_to_runs()
+    runs = base_to_runs(base, repetitions)
+
+    return base, runs
 
     """
 
@@ -247,6 +249,8 @@ def cycle_through_clusters(services, parallelism):
         else:
             i += 1
 
+    return base
+
 
 # given the hardware structure of the cluster, returns a list of the possible achievable parallelism levels
 # i.e. on a cluster with 2 nodes with 4 cores each, parallelism levels of 5 or 7 are unachievable
@@ -282,7 +286,8 @@ def base_scheduler_parallel(clusters, parallelism, services):
             # collects all necessary info
             service_name = list(s.keys())[0]
             current_service = s[service_name]
-            current_cluster = clusters[current_service["cluster"]]
+            current_cluster_name = current_service["cluster"]
+            current_cluster = clusters[current_cluster_name]
             possible_parallelism = current_cluster["possible_parallelism"]
             minio_alias = current_cluster["minio_alias"]
             cluster_architecture = current_cluster["architecture"]
@@ -304,7 +309,7 @@ def base_scheduler_parallel(clusters, parallelism, services):
                 "cpu": str(cpu),
                 "memory": str(memory),
                 "image": image,
-                "cluster": current_cluster,
+                "cluster": current_cluster_name,
                 "script": current_service["script"],
                 "minio_alias": minio_alias,
                 "input_bucket": current_service["input_bucket"],
@@ -321,6 +326,22 @@ def base_scheduler_parallel(clusters, parallelism, services):
         base.append(run)
 
     return base
+
+
+# todo comment
+def base_to_runs(base, repetitions):
+    runs = []
+
+    for i in range(len(base)):
+        b = base[i]
+        b["id"] = "Run #" + str(i + 1)
+        for j in range(repetitions):
+            run_id = i*repetitions + j + 1
+            r = b.copy()
+            r["id"] = "Run #" + str(run_id)
+            runs.append(r)
+
+    return runs
 
 
 # todo comment
@@ -397,27 +418,42 @@ def runs_diff(run1, run2):
             print("\t\t" + colored(service_name, "blue") + "memory: " + colored(s1["memory"], "green") + " mb -> " + colored(s2["memory"], "green") + " mb")
             
             
-def show_all(run):
+def show_all(run, clusters):
     print("\t" + run["id"])
-    print("\t\t" + colored(str(run["nodes"]), "green") + " node(s)")
+
+    print("\t\tServices:")
+    mentioned_clusters = []
     for s in run["services"]:
         service_name = "{:<20}".format(s["name"])
-        print("\t\t" + colored(service_name, "blue") + "cpu: " + colored(s["cpu"], "green") + " , memory: " + colored(s["memory"], "green") + " mb")
+        print("\t\t\t" + colored(service_name, "blue")
+              + "cpu: " + colored(s["cpu"], "green")
+              + " , memory: " + colored(s["memory"], "green") + " mb"
+              + " , cluster: " + colored(s["cluster"], "green"))
+        mentioned_clusters.append(s["cluster"])
+
+    print("\t\tClusters:")
+    requested_parallelism = run["parallelism"]
+
+    for cluster_name in mentioned_clusters:
+        cluster = clusters[cluster_name]
+        closest_parallelism = get_closest_parallelism_level(requested_parallelism,
+                                                            cluster["possible_parallelism"], cluster_name)
+        nodes = cluster["possible_parallelism"][closest_parallelism][1]
+        cluster_name = "{:<20}".format(cluster_name)
+        print("\t\t\t" + colored(cluster_name, "blue") + "nodes: " + colored(str(nodes), "green"))
 
 
 # todo add total number of runs
-def show_runs(base, nodes, repetitions):
+def show_runs(base, repetitions, clusters):
     print("\nScheduler:")
-    show_all(base[0])
+    show_all(base[0], clusters)
+    return
     
     for i in range(1, len(base)):
         print("\t" + base[i]["id"])
         runs_diff(base[i-1], base[i])
 
-    if isinstance(nodes, type([])):
-        print("\n\tRepeated " + colored(str(repetitions), "green") + " time(s) on " + ", ".join([colored(str(n), "green") for n in nodes]) + " nodes")
-    else:
-        print("\n\tRepeated " + colored(str(repetitions), "green") + " time(s)")
+    print("\n\tRepeated " + colored(str(repetitions), "green") + " time(s)")
 
     # todo re-enable this after testing!
     # value = get_valid_input("Do you want to proceed? (y/n)\t", ["y", "n"])

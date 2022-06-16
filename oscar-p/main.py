@@ -148,12 +148,9 @@ def test():
 # show_workflow(ordered_services)
 
 clusters = get_clusters_info()
-
-base, runs, nodes = run_scheduler(clusters)
-
-quit()
+base, runs = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-show_runs(base, nodes, repetitions)
+show_runs(base, repetitions, clusters)
 
 quit()
 
