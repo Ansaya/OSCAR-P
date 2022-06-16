@@ -260,8 +260,8 @@ def get_possible_parallelisms(total_nodes, max_cores, max_memory):
         for n in range(1, int(total_nodes) + 1):
             p = c * n
             cores = max_cores / c
+            mem = int((max_memory - 128) / c)
             cores = round(cores, 1) - 0.1
-            mem = int((max_memory - 128) / p)
             possible_parallelism[p] = (cores, n, mem)
     return possible_parallelism
 
@@ -294,7 +294,7 @@ def base_scheduler_parallel(clusters, parallelism, services):
 
             # checks if the requested parallelism level is achievable on the selected cluster
             # if not it returns the closest available level
-            p = get_closest_parallelism_level(p, possible_parallelism, current_service["cluster"])
+            p = get_closest_parallelism_level(p, possible_parallelism, current_service["cluster"], True)
 
             # after choosing a parallelism level we gather the node configuration for the selected cluster
             cpu = possible_parallelism[p][0]
@@ -361,19 +361,21 @@ def get_correct_docker_image(service, architecture, service_name):
     return image
 
 
-def get_closest_parallelism_level(requested_parallelism, possible_parallelism, cluster_name):
+def get_closest_parallelism_level(requested_parallelism, possible_parallelism, cluster_name, verbose):
     """
     checks if the requested parallelism level is achievable on the selected cluster, if not it returns the closest
         available level
     :param requested_parallelism: requested parallelism level
     :param possible_parallelism: list of possible parallelism levels
     :param cluster_name: name of the cluster
+    :param verbose: boolean, if true shows warning when exact match is not possible
     :return: selected parallelism level
     """
 
     if requested_parallelism not in possible_parallelism.keys():
         closest_parallelism = min(possible_parallelism, key=lambda x: abs(x - requested_parallelism))
-        show_warning("A parallelism of " + str(requested_parallelism) + " is not achievable on cluster "
+        if verbose:
+            show_warning("A parallelism of " + str(requested_parallelism) + " is not achievable on cluster "
                      + cluster_name + ", using " + str(closest_parallelism) + " instead")
         return closest_parallelism
     else:
@@ -405,21 +407,60 @@ def get_clusters_info():
     
 
 # given two runs, it shows the difference in cpu and memory settings
-def runs_diff(run1, run2):
-    if run1["nodes"] != run2["nodes"]:
-        print("\t\t" + colored(str(run1["nodes"]), "green") + " -> " + colored(str(run2["nodes"]), "green") + " node(s)")
+def runs_diff_services(run1, run2):
+
+    print("\t\tServices:")
     for i in range(len(run1["services"])):
         s1 = run1["services"][i]
         s2 = run2["services"][i]
         service_name = "{:<20}".format(s1["name"])
+
+        output = ""
         if s1["cpu"] != s2["cpu"]:
-            print("\t\t" + colored(service_name, "blue") + "cpu: " + colored(s1["cpu"], "green") + " -> " + colored(s2["cpu"], "green"))
-        if s1["memory"] != s2["memory"]:
-            print("\t\t" + colored(service_name, "blue") + "memory: " + colored(s1["memory"], "green") + " mb -> " + colored(s2["memory"], "green") + " mb")
-            
-            
-def show_all(run, clusters):
-    print("\t" + run["id"])
+            output += "cpu: " + colored(s1["cpu"], "green") + " -> " + colored(s2["cpu"], "green")
+            output += ", memory: " + colored(s1["memory"], "green") + " mb -> " + colored(s2["memory"], "green") + " mb"
+
+        if output != "":
+            print("\t\t\t" + colored(service_name, "blue") + output)
+        else:
+            print("\t\t\t" + colored(service_name, "blue") + colored("unchanged", "green"))
+
+        output = ""
+        if s1["cluster"] != s2["cluster"]:
+            output += "cluster: " + colored(s1["cluster"], "green") + " -> " + colored(s2["cluster"], "green")
+
+        if output != "":
+            print("\t\t\t" + colored(service_name, "blue") + output)
+
+
+def runs_diff_clusters(last_parallelism, run, clusters, mentioned_clusters):
+    current_parallelism = run["parallelism"]
+
+    print("\t\tClusters:")
+    for cluster_name in mentioned_clusters:
+        cluster = clusters[cluster_name]
+        old_closest_parallelism = get_closest_parallelism_level(last_parallelism,
+                                                                cluster["possible_parallelism"], cluster_name, False)
+        new_closest_parallelism = get_closest_parallelism_level(current_parallelism,
+                                                                cluster["possible_parallelism"], cluster_name, False)
+        old_nodes = cluster["possible_parallelism"][old_closest_parallelism][1]
+        new_nodes = cluster["possible_parallelism"][new_closest_parallelism][1]
+        cluster_name = "{:<20}".format(cluster_name)
+
+        output = ""
+        if old_nodes != new_nodes:
+            output += "cluster: " + colored(old_nodes, "green") + " -> " + colored(new_nodes, "green")
+
+        if output != "":
+            print("\t\t\t" + colored(cluster_name, "blue") + output)
+        else:
+            print("\t\t\t" + colored(cluster_name, "blue") + colored("unchanged", "green"))
+
+    return current_parallelism
+
+
+def show_all_services(run):
+    print("\t" + run["id"] + " - Parallelism level: " + str(run["parallelism"]))
 
     print("\t\tServices:")
     mentioned_clusters = []
@@ -429,31 +470,42 @@ def show_all(run, clusters):
               + "cpu: " + colored(s["cpu"], "green")
               + " , memory: " + colored(s["memory"], "green") + " mb"
               + " , cluster: " + colored(s["cluster"], "green"))
+
         mentioned_clusters.append(s["cluster"])
 
+    return mentioned_clusters
+
+
+def show_all_clusters(run, clusters, mentioned_clusters):
     print("\t\tClusters:")
     requested_parallelism = run["parallelism"]
 
     for cluster_name in mentioned_clusters:
         cluster = clusters[cluster_name]
         closest_parallelism = get_closest_parallelism_level(requested_parallelism,
-                                                            cluster["possible_parallelism"], cluster_name)
+                                                            cluster["possible_parallelism"], cluster_name, False)
         nodes = cluster["possible_parallelism"][closest_parallelism][1]
         cluster_name = "{:<20}".format(cluster_name)
         print("\t\t\t" + colored(cluster_name, "blue") + "nodes: " + colored(str(nodes), "green"))
+
+    return requested_parallelism
 
 
 # todo add total number of runs
 def show_runs(base, repetitions, clusters):
     print("\nScheduler:")
-    show_all(base[0], clusters)
-    return
-    
-    for i in range(1, len(base)):
-        print("\t" + base[i]["id"])
-        runs_diff(base[i-1], base[i])
+    mentioned_clusters = show_all_services(base[0])
+    last_parallelism = show_all_clusters(base[0], clusters, mentioned_clusters)
+    print()
 
-    print("\n\tRepeated " + colored(str(repetitions), "green") + " time(s)")
+    for i in range(1, len(base)):
+        print("\t" + base[i]["id"] + " - Parallelism level: " + str(base[i]["parallelism"]))
+        runs_diff_services(base[i-1], base[i])
+        last_parallelism = runs_diff_clusters(last_parallelism, base[i], clusters, mentioned_clusters)
+        print()
+
+    print("\n\tRepeated " + colored(str(repetitions), "green") + " time(s), "
+          + str(len(base) * repetitions) + " runs in total")
 
     # todo re-enable this after testing!
     # value = get_valid_input("Do you want to proceed? (y/n)\t", ["y", "n"])
