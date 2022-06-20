@@ -78,7 +78,7 @@ def get_output_buckets_name(bucket_list):
 def workflow_analyzer():
 
     # first creates a list of services with their input and output buckets
-    with open("demo.yaml", "r") as file:
+    with open("input.yaml", "r") as file:
         script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
         services = []
         for s in script_config["services"]:
@@ -143,7 +143,7 @@ def var_process(x, i, cont):
 # "runs" is the full list of runs, including repetitions (implemented to add state saving later on)
 # "nodes" is just the number of nodes
 def run_scheduler():
-    with open("demo.yaml", "r") as file:
+    with open("input.yaml", "r") as file:
         script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
         repetitions = script_config["run"]["repetitions"]
         parallelism = script_config["run"]["parallelism"]
@@ -368,7 +368,7 @@ def get_closest_parallelism_level(requested_parallelism, possible_parallelism, c
     :param requested_parallelism: requested parallelism level
     :param possible_parallelism: list of possible parallelism levels
     :param cluster_name: name of the cluster
-    :param verbose: boolean, if true shows warning when exact match is not possible
+    :param verbose: boolean, if true shows a warning when an exact match is not possible
     :return: selected parallelism level
     """
 
@@ -384,7 +384,7 @@ def get_closest_parallelism_level(requested_parallelism, possible_parallelism, c
 
 # todo comment
 def get_clusters_info():
-    with open("demo.yaml", "r") as file:
+    with open("input.yaml", "r") as file:
         script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
 
     layers = script_config["layers"]
@@ -492,6 +492,7 @@ def show_all_clusters(run, clusters, mentioned_clusters):
 
 
 # todo add total number of runs
+# todo add "active clusters" field in base
 def show_runs(base, repetitions, clusters):
     print("\nScheduler:")
     mentioned_clusters = show_all_services(base[0])

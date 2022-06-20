@@ -28,7 +28,7 @@ configuration:
         name: Edge Layer
         clusters: 
           - raspi_cluster:
-              oscarcli_alias: "raspi_endpoint"
+              oscarcli_alias: "oscar-raspi"
               minio_alias: "raspi"
               storage_bucket: "storage"
               ip_address: 158.42.105.126
@@ -43,7 +43,7 @@ configuration:
         name: Cloud Layer
         clusters: 
           - vm_cluster:
-              oscarcli_name: "oscarui_endpoint"
+              oscarcli_name: "oscar-vm"
               minio_alias: "minio"
               storage_bucket: "storage"
               ip_address: 158.42.105.149

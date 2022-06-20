@@ -1,61 +1,42 @@
 functions:
   oscar:
   - oscar-vm:
-      cpu: '0.9'
-      image: scrapjack/blurry-faces-modded:latest
+      cpu: '1.9'
+      image: scrapjack/blurry-faces-modded:stable
       input:
       - path: input-videos
         storage_provider: minio.default
-      memory: 1024Mi
+      memory: 4032Mi
       name: blur-faces
       output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
       - path: blurred-images
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .jpg
-      script: bash-scripts/blurry-faces-annotated.sh
-  - oscar-vm:
-      cpu: '0.9'
-      image: scrapjack/mask-detector-modded:latest
-      input:
-      - path: blurred-images
-        storage_provider: minio.default
-      memory: 1024Mi
-      name: mask-detector
-      output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
-      - path: results
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .jpg
-      script: bash-scripts/mask-detector-annotated.sh
-  - oscar-vm:
-      cpu: '0.9'
-      image: scrapjack/dummy:stable
-      input:
-      - path: results
-        storage_provider: minio.default
-      memory: 1024Mi
-      name: dummy
-      output:
-      - path: database
-        prefix: []
-        storage_provider: minio.default
-        suffix:
-        - .csv
-      - path: trash
         prefix: []
         storage_provider: minio.default
         suffix: []
-      script: bash-scripts/dummy.sh
+      script: bash-scripts/blurry-faces.sh
+  - oscar-vm:
+      cpu: '1.9'
+      image: scrapjack/mask-detector-modded:stable
+      input:
+      - path: blurred-images
+        storage_provider: minio.default
+      memory: 4032Mi
+      name: mask-detector
+      output:
+      - path: results
+        prefix: []
+        storage_provider: minio.default
+        suffix: []
+      script: bash-scripts/mask-detector.sh
+storage_providers:
+  minio:
+    raspi_cluster:
+      access_key: minio
+      endpoint: https://minio.graspi.im.grycap.net
+      region: us-east-1
+      secret_key: minio-aisprint-2021
+    vm_cluster:
+      access_key: minio
+      endpoint: https://minio.quirky-kowalevski6.im.grycap.net
+      region: us-east-1
+      secret_key: minio-aisprint-2022

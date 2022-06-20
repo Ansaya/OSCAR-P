@@ -7,7 +7,7 @@ from termcolor import colored
 
 from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_configuration, apply_cluster_configuration, \
     generate_fdl_single_service, remove_all_services, create_bucket, apply_fdl_configuration_wrapped, \
-    recreate_output_buckets
+    recreate_output_buckets, set_default_oscar_cluster
 from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
     get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_clusters_info
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, \
@@ -18,11 +18,13 @@ from run_manager import move_files_to_input_bucket, wait_services_completion, mo
 from utils import show_error, auto_mkdir, show_warning, delete_directory
 # from mllibrary_manager import run_mllibrary
 
-def prepare_cluster():
-    remove_all_services()
-    remove_all_buckets()
-    apply_cluster_configuration(run)
-    generate_fdl_configuration(run, cluster_name)
+
+def prepare_clusters():
+    #remove_all_services(clusters)
+    #remove_all_buckets(clusters)
+    apply_cluster_configuration(run, clusters)
+    generate_fdl_configuration(run, clusters)
+    quit()
     apply_fdl_configuration_wrapped(run["services"])
 
 
@@ -144,15 +146,13 @@ def test():
     quit()
 
 
-# ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
+ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
 # show_workflow(ordered_services)
 
 clusters = get_clusters_info()
 base, runs = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-show_runs(base, repetitions, clusters)
-
-quit()
+# show_runs(base, repetitions, clusters)
 
 campaign_dir = "runs-results/" + campaign_name
 
@@ -162,14 +162,14 @@ campaign_dir = "runs-results/" + campaign_name
 s = manage_campaign_dir()
 
 # todo all oscar command should specify on which cluster to execute
-cluster_name = get_cluster_name()
+# cluster_name = get_cluster_name()
 
 for i in range(s, len(runs)):
     run = runs[i]
     print(colored("\nStarting " + run["id"] + " of " + str(len(runs)), "blue"))
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
 
-    prepare_cluster()
+    prepare_clusters()
     start_run_full()
     end_run_full()
     test_single_services()

@@ -81,10 +81,9 @@ def get_valid_input(message, allowed_values):
 
 # SSH utils
 
-def configure_ssh_client():
-    from input_file_processing import get_cluster_ssh_info
-
-    address, port, username = get_cluster_ssh_info()
+def configure_ssh_client(cluster):
+    address, port, username = cluster["ip_address"], cluster["port"], cluster["username"]
+    # print(address, port, username)
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
     private_key = get_private_key()
