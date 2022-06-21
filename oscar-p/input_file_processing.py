@@ -9,20 +9,43 @@ from utils import get_valid_input, show_warning, show_error, show_fatal_error
 
 def consistency_check(services):
     """
-    receives the list of services, we should only have one empty "father" field (the first service)
-    :param services: ordered list of services, each a dictionary containing name of the service (as string),
-            input bucket (as string) and output buckets (list of strings)
-    :returns: True if workflow is consistent, False otherwise
+    makes sure that all services are linked, i.e. at least one output bucket of the current service matches
+    the input bucket of the next service
     """
-    root_found = False  # root being the node with "father" field empty
 
-    for service in services:
-        if service["father"] == "":
-            if not root_found:
-                root_found = True
-            else:
-                return False
-    return True
+    for i in range(len(services) - 1):
+        match_found = False
+        current_service = services[i]
+        next_service = services[i+1]
+        for output_bucket in current_service["outputs"]:
+            if output_bucket == next_service["input"]:
+                match_found = True
+                break
+        if not match_found:
+            show_error("Workflow inconsistent")
+            quit()
+
+    return
+
+
+def get_simple_services():
+    """
+    makes a list of the services with only very basic info, such as the service name and its buckets
+    :return: list of services with only basic info, such as the service name and its buckets
+    """
+    with open("input.yaml", "r") as file:
+        script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
+        simple_services = []
+        for s in script_config["services"]:
+            service_name = list(s.keys())[0]
+            service = {
+                "name": service_name,
+                "input": s[service_name]["input_bucket"],
+                "outputs": get_buckets_name_from_list(s[service_name]["output_buckets"]),
+                }
+            simple_services.append(service)
+
+    return simple_services
 
 
 # can be used both for the ordered services list and for the services under run
@@ -32,81 +55,12 @@ def get_service_by_name(name, services):
             return s
 
 
-def find_root(services):
-    for s in services:
-        if s["father"] == "":
-            return s
-
-
-# reorders the services based on the identified workflow
-def reorder_services(services):
-
-    # first it orders the services
-    ordered_services = [find_root(services)]
-
-    i = 0
-
-    while True:
-        s = ordered_services[i]
-        for c in s["children"]:
-            child = get_service_by_name(c, services)
-            if child not in ordered_services:
-                ordered_services.append(child)
-        i += 1
-
-        if i == len(ordered_services):  # if list empty break
-            break
-
-    # then it deletes the useless fields
-    for s in ordered_services:
-        s.pop("father")
-        s.pop("children")
-
-    return ordered_services
-
-
-def get_output_buckets_name(bucket_list):
+def get_buckets_name_from_list(bucket_list):
     buckets_names = []
     for b in bucket_list:
         buckets_names.append(b["path"])
 
     return buckets_names
-
-
-# given an input file, it tries to find a valid workflow by looking at the input and output bucket of every service
-# it then returns the list of the ordered services
-def workflow_analyzer():
-
-    # first creates a list of services with their input and output buckets
-    with open("input.yaml", "r") as file:
-        script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
-        services = []
-        for s in script_config["services"]:
-            name = list(s.keys())[0]
-            service = {
-                "name": name,
-                "input": s[name]["input_bucket"],
-                "outputs": get_output_buckets_name(s[name]["output_buckets"]),
-                "father": "",
-                "children": []
-                }
-            services.append(service)
-
-    # then tries to find the father and children service, for every service, by looking at the buckets
-    for s in services:
-        for t in services:
-            for bucket in t["outputs"]:
-                if s["input"] == bucket:
-                    s["father"] = t["name"]
-                    t["children"].append(s["name"])
-
-    # and checks if the workflow is consistent
-    if not consistency_check(services):  # if returns False, hence not consistent
-        show_error("Workflow inconsistent")
-        quit()
-
-    # finally, reorder the services based on the identified workflow and returns it
-    return reorder_services(services)
 
 
 # given a list of ordered services it prints the workflow
@@ -313,7 +267,7 @@ def base_scheduler_parallel(clusters, parallelism, services):
                 "script": current_service["script"],
                 "minio_alias": minio_alias,
                 "input_bucket": current_service["input_bucket"],
-                "output_buckets": current_service["output_buckets"]
+                "output_buckets": current_service["output_buckets"],
                 }
             configured_services.append(new_service)
 
@@ -405,7 +359,7 @@ def get_clusters_info():
 
     return all_clusters
     
-
+# todo all the below methods that just print stuff should be moved into a new class called GUI
 # given two runs, it shows the difference in cpu and memory settings
 def runs_diff_services(run1, run2):
 
@@ -531,13 +485,7 @@ def get_cluster_name():
 def get_workflow_input():
     with open("input.yaml", "r") as file:
         i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["input_files"]
-        return i["filename"], i["number_of_files"], i["distribution"], i["inter_upload_time"], i["mc_alias"]
-
-
-def get_mc_alias():
-    with open("input.yaml", "r") as file:
-        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["input_files"]
-        return i["mc_alias"]
+        return i["filename"], i["number_of_files"], i["distribution"], i["inter_upload_time"]
 
 
 def get_cluster_ssh_info():

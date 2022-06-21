@@ -30,7 +30,6 @@ configuration:
           - raspi_cluster:
               oscarcli_alias: "oscar-raspi"
               minio_alias: "minio-raspi"
-              storage_bucket: "storage"
               ip_address: 158.42.105.64
               port: 10022
               username: "grycap"
@@ -45,7 +44,6 @@ configuration:
           - vm_cluster:
               oscarcli_alias: "oscar-vm"
               minio_alias: "minio-vm"
-              storage_bucket: "storage"
               ip_address: 158.42.105.149
               port: 10022
               username: "aisprint"
@@ -56,7 +54,7 @@ configuration:
               max_memory_mb: 8192
   input_files:
     filename: "Test-Video.mp4"
-    number_of_files: 10
+    number_of_files: 1
     batch_size: 2
     distribution: deterministic
     inter_upload_time: 10
@@ -69,4 +67,4 @@ configuration:
   other:
     time_correction: 1
     test_single_components: True
-    debug: True
+    debug: False

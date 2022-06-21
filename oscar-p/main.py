@@ -8,8 +8,9 @@ from termcolor import colored
 from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_configuration, apply_cluster_configuration, \
     generate_fdl_single_service, remove_all_services, create_bucket, apply_fdl_configuration_wrapped, \
     recreate_output_buckets, set_default_oscar_cluster
-from input_file_processing import workflow_analyzer, show_workflow, run_scheduler, show_runs, get_cluster_name, \
-    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_clusters_info
+from input_file_processing import show_workflow, run_scheduler, show_runs, get_cluster_name, \
+    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_clusters_info, \
+    consistency_check, get_simple_services
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
@@ -22,14 +23,16 @@ from utils import show_error, auto_mkdir, show_warning, delete_directory
 def prepare_clusters():
     #remove_all_services(clusters)
     #remove_all_buckets(clusters)
-    apply_cluster_configuration(run, clusters)
+    #apply_cluster_configuration(run, clusters)
     generate_fdl_configuration(run, clusters)
-    quit()
-    apply_fdl_configuration_wrapped(run["services"])
+    apply_fdl_configuration_wrapped(run["services"], clusters)
 
 
 def start_run_full():
-    move_files_to_input_bucket(ordered_services[0]["input"])
+    # print(run["services"][0])
+    
+    move_files_to_input_bucket(run["services"][0])
+    quit()
     wait_services_completion(ordered_services)
 
 
@@ -146,13 +149,20 @@ def test():
     quit()
 
 
-ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
+# todo is ordered_services used anywhere else?
+# todo services are always ordered, this can be simplified a lot
+# ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
 # show_workflow(ordered_services)
+
+simple_services = get_simple_services()
+consistency_check(simple_services)
+show_workflow(simple_services)
+quit()
 
 clusters = get_clusters_info()
 base, runs = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-# show_runs(base, repetitions, clusters)
+show_runs(base, repetitions, clusters)
 
 campaign_dir = "runs-results/" + campaign_name
 

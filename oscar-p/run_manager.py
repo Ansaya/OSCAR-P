@@ -6,7 +6,7 @@ import numpy as np
 from termcolor import colored
 from tqdm import tqdm
 
-from input_file_processing import get_mc_alias
+from input_file_processing import get_workflow_input
 from utils import get_command_output_wrapped, show_error, auto_mkdir
 
 
@@ -22,16 +22,18 @@ def wait_interval(distribution, inter_upload_time):
 
 
 # move files to the input bucket, starting the workflow execution
-def move_files_to_input_bucket(input_bucket):
+def move_files_to_input_bucket(service):
     print(colored("Moving input files...", "yellow"))
-    from input_file_processing import get_workflow_input
-    storage_bucket = "storage"
-
-    filename, number_of_files, distribution, inter_upload_time, mc_alias = get_workflow_input()
+    minio_alias = service["minio_alias"]
+    storage_bucket =  minio_alias + "/" + service["storage_bucket"]
+    input_bucket =  minio_alias + "/" + service["input_bucket"]
+    
+    filename, number_of_files, distribution, inter_upload_time = get_workflow_input()
     stripped_filename, extension = filename.split(".")
 
     for i in range(0, number_of_files):
-        move_file_between_buckets(filename, storage_bucket, stripped_filename + "_" + str(i) + "." + extension, input_bucket)
+        destination_file = stripped_filename + "_" + str(i) + "." + extension
+        move_file_between_buckets(filename, storage_bucket, destination_file, input_bucket)
 
         wait = wait_interval(distribution, inter_upload_time)
         time.sleep(wait)
@@ -39,10 +41,10 @@ def move_files_to_input_bucket(input_bucket):
     return
 
 
+# origin and destination bucket must already include the minio_alias, i.e. "minio-vm/storage"
 def move_file_between_buckets(origin_file, origin_bucket, destination_file, destination_bucket):
-    mc_alias = get_mc_alias()
-    origin = mc_alias + "/" + origin_bucket + "/" + origin_file
-    destination = mc_alias + "/" + destination_bucket + "/" + destination_file
+    origin = origin_bucket + "/" + origin_file
+    destination = destination_bucket + "/" + destination_file
     command = "oscar-p/mc cp " + origin + " " + destination
     get_command_output_wrapped(command)
     return

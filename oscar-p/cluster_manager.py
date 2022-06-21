@@ -5,7 +5,7 @@ import json
 import os
 
 from termcolor import colored
-from input_file_processing import get_mc_alias, get_debug, get_closest_parallelism_level
+from input_file_processing import get_debug, get_closest_parallelism_level
 from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
     make_debug_info, show_warning
 
@@ -22,6 +22,7 @@ def remove_all_services(clusters):
             service = service.split()[0]
             command = "oscar-p/oscar-cli service remove " + service
             get_command_output_wrapped(command)
+            print("Removed service " + service + " from cluster " + c)
     print(colored("Done!", "green"))
 
 
@@ -38,6 +39,7 @@ def remove_all_buckets(clusters):
                 bucket = minio_alias + "/" + bucket
                 command = "oscar-p/mc rb " + bucket + " --force"
                 get_command_output_wrapped(command)
+                print("Removed bucket " + bucket + " from cluster " + c)
     print(colored("Done!", "green"))
     return
 
@@ -85,6 +87,7 @@ def clean_all_logs():
 def make_fdl_buckets_list(buckets):
     bucket_list = []
     for b in buckets:
+        
         prefix = []
         for p in b["prefix"]:
             prefix.append(p)
@@ -92,10 +95,17 @@ def make_fdl_buckets_list(buckets):
         suffix = []
         for s in b["suffix"]:
             suffix.append(s)
+            
+        if isinstance(b["cluster"], type(None)):
+            storage_provider = "minio.default"
+        else:
+            storage_provider = "minio." + b["cluster"]
+            
+        print(storage_provider)
 
         bucket_list.append({
             "path": b["path"],
-            "storage_provider": "minio.default",
+            "storage_provider": storage_provider,
             "prefix": prefix,
             "suffix": suffix,
         })
@@ -105,6 +115,8 @@ def make_fdl_buckets_list(buckets):
 # generate the FDL file used to prepare OSCAR, starting from the input yaml
 def generate_fdl_configuration(run, clusters):
     with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
+        
+        # print(run["services"])        
 
         services = []
         for s in run["services"]:
@@ -182,7 +194,7 @@ def _apply_fdl_configuration():
     return
 
 
-def apply_fdl_configuration_wrapped(services):
+def apply_fdl_configuration_wrapped(services, clusters):
     """
 
     :param services:
@@ -192,17 +204,33 @@ def apply_fdl_configuration_wrapped(services):
     print(colored("Adjusting OSCAR configuration...", "yellow"))
     while True:
         _apply_fdl_configuration()
-        if verify_correct_fdl_deployment(services):
+        if verify_correct_fdl_deployment(services, clusters):
             break
     print(colored("Done!", "green"))
 
 
-def verify_correct_fdl_deployment(services):
+def verify_correct_fdl_deployment(services, clusters):
     """
     after applying the FDL file, makes sure that all the required services are deployed
     """
-
+    
     print(colored("Checking correct deployment...", "yellow"))
+    
+    for s in services:
+        active_cluster = clusters[s["cluster"]]
+        deployed_services = get_deployed_services(active_cluster)
+        
+        if s["name"] not in deployed_services:
+            show_warning("Service " + s["name"] + " not deployed")
+            return False
+        else:
+            print("Service " + s["name"] + " deployed on cluster " + s["cluster"])
+        
+    return True
+    
+
+def get_deployed_services(cluster):
+    set_default_oscar_cluster(cluster)
     command = "oscar-p/oscar-cli service list"
     output = get_command_output_wrapped(command)
     
@@ -212,15 +240,8 @@ def verify_correct_fdl_deployment(services):
     
     for o in output:
         deployed_services.append(o.split('\t')[0])
-    
-    for s in services:
-        if s["name"] not in deployed_services:
-            show_warning("Service " + s["name"] + " not deployed")
-            return False
-        else:
-            print("Service " + s["name"] + " deployed")
-    
-    return True
+        
+    return deployed_services
 
 
 def set_default_oscar_cluster(cluster):

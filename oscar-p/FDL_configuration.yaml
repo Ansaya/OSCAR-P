@@ -1,17 +1,17 @@
 functions:
   oscar:
-  - oscar-vm:
+  - oscar-raspi:
       cpu: '1.9'
-      image: scrapjack/blurry-faces-modded:stable
+      image: ghcr.io/srisco/blurry-faces-arm64
       input:
       - path: input-videos
         storage_provider: minio.default
-      memory: 4032Mi
+      memory: 1984Mi
       name: blur-faces
       output:
       - path: blurred-images
         prefix: []
-        storage_provider: minio.default
+        storage_provider: minio.vm_cluster
         suffix: []
       script: bash-scripts/blurry-faces.sh
   - oscar-vm:
