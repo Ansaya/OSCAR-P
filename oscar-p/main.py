@@ -21,16 +21,15 @@ from utils import show_error, auto_mkdir, show_warning, delete_directory
 
 
 def prepare_clusters():
-    #remove_all_services(clusters)
-    #remove_all_buckets(clusters)
-    #apply_cluster_configuration(run, clusters)
+    remove_all_services(clusters)
+    remove_all_buckets(clusters)
+    apply_cluster_configuration(run, clusters)
     generate_fdl_configuration(run, clusters)
     apply_fdl_configuration_wrapped(run["services"], clusters)
+    quit()
 
 
 def start_run_full():
-    # print(run["services"][0])
-    
     move_files_to_input_bucket(run["services"][0])
     quit()
     wait_services_completion(ordered_services)
@@ -149,20 +148,14 @@ def test():
     quit()
 
 
-# todo is ordered_services used anywhere else?
-# todo services are always ordered, this can be simplified a lot
-# ordered_services = workflow_analyzer()  # ordered list of services, with name and input/output buckets
-# show_workflow(ordered_services)
-
 simple_services = get_simple_services()
 consistency_check(simple_services)
 show_workflow(simple_services)
-quit()
 
 clusters = get_clusters_info()
 base, runs = run_scheduler()
 campaign_name, repetitions, cooldown = get_run_info()
-show_runs(base, repetitions, clusters)
+# show_runs(base, repetitions, clusters)
 
 campaign_dir = "runs-results/" + campaign_name
 
@@ -171,8 +164,6 @@ campaign_dir = "runs-results/" + campaign_name
 
 s = manage_campaign_dir()
 
-# todo all oscar command should specify on which cluster to execute
-# cluster_name = get_cluster_name()
 
 for i in range(s, len(runs)):
     run = runs[i]

@@ -25,8 +25,8 @@ def wait_interval(distribution, inter_upload_time):
 def move_files_to_input_bucket(service):
     print(colored("Moving input files...", "yellow"))
     minio_alias = service["minio_alias"]
-    storage_bucket =  minio_alias + "/" + service["storage_bucket"]
-    input_bucket =  minio_alias + "/" + service["input_bucket"]
+    storage_bucket = minio_alias + "/" + "storage"
+    input_bucket = minio_alias + "/" + service["input_bucket"]
     
     filename, number_of_files, distribution, inter_upload_time = get_workflow_input()
     stripped_filename, extension = filename.split(".")

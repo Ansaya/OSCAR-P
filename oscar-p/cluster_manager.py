@@ -30,7 +30,7 @@ def remove_all_buckets(clusters):
     print(colored("Removing buckets...", "yellow"))
     for c in clusters:
         cluster = clusters[c]
-        minio_alias =  cluster["minio_alias"]
+        minio_alias = cluster["minio_alias"]
         command = "oscar-p/mc ls " + minio_alias
         buckets = get_command_output_wrapped(command)
         for bucket in buckets:
@@ -84,10 +84,16 @@ def clean_all_logs():
     return
 
 
-def make_fdl_buckets_list(buckets):
+def make_fdl_buckets_list(buckets, current_cluster_name, next_cluster_name):
     bucket_list = []
+
+    if current_cluster_name == next_cluster_name:
+        storage_provider = "minio.default"
+    else:
+        storage_provider = "minio." + next_cluster_name
+
     for b in buckets:
-        
+
         prefix = []
         for p in b["prefix"]:
             prefix.append(p)
@@ -95,13 +101,6 @@ def make_fdl_buckets_list(buckets):
         suffix = []
         for s in b["suffix"]:
             suffix.append(s)
-            
-        if isinstance(b["cluster"], type(None)):
-            storage_provider = "minio.default"
-        else:
-            storage_provider = "minio." + b["cluster"]
-            
-        print(storage_provider)
 
         bucket_list.append({
             "path": b["path"],
@@ -115,31 +114,37 @@ def make_fdl_buckets_list(buckets):
 # generate the FDL file used to prepare OSCAR, starting from the input yaml
 def generate_fdl_configuration(run, clusters):
     with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
-        
-        # print(run["services"])        
 
         services = []
-        for s in run["services"]:
+        for i in range(len(run["services"])):
 
-            cluster_name = s["cluster"]
-            oscarcli_alias = clusters[cluster_name]["oscarcli_alias"]
+            current_service = run["services"][i]
+            current_cluster_name = current_service["cluster"]
+            oscarcli_alias = clusters[current_cluster_name]["oscarcli_alias"]
+
+            if i == (len(run["services"]) - 1):
+                next_cluster_name = current_cluster_name
+            else:
+                next_service = run["services"][i + 1]
+                next_cluster_name = next_service["cluster"]
 
             service = {oscarcli_alias: {
-                "cpu": s["cpu"],
-                "memory": s["memory"] + "Mi",
-                "image": s["image"],
-                "name": s["name"],
-                "script": s["script"],
+                "cpu": current_service["cpu"],
+                "memory": current_service["memory"] + "Mi",
+                "image": current_service["image"],
+                "name": current_service["name"],
+                "script": current_service["script"],
                 "input": [{
-                    "path": s["input_bucket"],
+                    "path": current_service["input_bucket"],
                     "storage_provider": "minio.default"
                 }],
-                "output": make_fdl_buckets_list(s["output_buckets"])
-            }
+                "output": make_fdl_buckets_list(current_service["output_buckets"],
+                                                current_cluster_name, next_cluster_name)
+                }
             }
             services.append(service)
 
-        fdl_config = {"functions": {"oscar": services}, 
+        fdl_config = {"functions": {"oscar": services},
                       "storage_providers": {"minio": generate_fdl_storage_providers(clusters)}}
         yaml.dump(fdl_config, file)
 
@@ -148,43 +153,43 @@ def generate_fdl_configuration(run, clusters):
 def generate_fdl_single_service(service, cluster_name):
     with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
         services = [{cluster_name: {
-                "cpu": service["cpu"],
-                "memory": service["memory"] + "Mi",
-                "image": service["image"],
-                "name": service["name"],
-                "script": service["script"],
-                "input": [{
-                    "path": "dead-start",
-                    "storage_provider": "minio.default"
-                }],
-                "output": make_fdl_buckets_list(service["output_buckets"])
-            }
-            }]
+            "cpu": service["cpu"],
+            "memory": service["memory"] + "Mi",
+            "image": service["image"],
+            "name": service["name"],
+            "script": service["script"],
+            "input": [{
+                "path": "dead-start",
+                "storage_provider": "minio.default"
+            }],
+            "output": make_fdl_buckets_list(service["output_buckets"])
+        }
+        }]
 
-        fdl_config = {"functions": {"oscar": services}, 
+        fdl_config = {"functions": {"oscar": services},
                       "storage_providers": {"minio": generate_fdl_storage_providers()}}
         yaml.dump(fdl_config, file)
 
 
 def generate_fdl_storage_providers(clusters):
     home_dir = os.path.expanduser('~')
-    
+
     with open(home_dir + "/.mc/config.json") as file:
         minio_config = json.load(file)
-        
+
     providers = {}
-        
-    for c in clusters:        
+
+    for c in clusters:
         cluster_minio_alias = clusters[c]["minio_alias"]
         cluster_info = minio_config["aliases"][cluster_minio_alias]
-        
+
         providers[c] = {
-                        "endpoint": cluster_info["url"],
-                        "access_key": cluster_info["accessKey"],
-                        "secret_key": cluster_info["secretKey"],
-                        "region": "us-east-1"
-                        }
-                    
+            "endpoint": cluster_info["url"],
+            "access_key": cluster_info["accessKey"],
+            "secret_key": cluster_info["secretKey"],
+            "region": "us-east-1"
+        }
+
     return providers
 
 
@@ -213,34 +218,34 @@ def verify_correct_fdl_deployment(services, clusters):
     """
     after applying the FDL file, makes sure that all the required services are deployed
     """
-    
+
     print(colored("Checking correct deployment...", "yellow"))
-    
+
     for s in services:
         active_cluster = clusters[s["cluster"]]
         deployed_services = get_deployed_services(active_cluster)
-        
+
         if s["name"] not in deployed_services:
             show_warning("Service " + s["name"] + " not deployed")
             return False
         else:
             print("Service " + s["name"] + " deployed on cluster " + s["cluster"])
-        
+
     return True
-    
+
 
 def get_deployed_services(cluster):
     set_default_oscar_cluster(cluster)
     command = "oscar-p/oscar-cli service list"
     output = get_command_output_wrapped(command)
-    
+
     deployed_services = []
 
     output.pop(0)
-    
+
     for o in output:
         deployed_services.append(o.split('\t')[0])
-        
+
     return deployed_services
 
 
@@ -248,7 +253,6 @@ def set_default_oscar_cluster(cluster):
     oscarcli_alias = cluster["oscarcli_alias"]
     command = "./oscar-p/oscar-cli cluster default -s " + oscarcli_alias
     get_command_output_wrapped(command)
-    
 
 
 # returns a list of nodes, with status = off if cordoned or on otherwise
@@ -282,15 +286,16 @@ def get_node_list(client):
 # cordons or uncordons the nodes of the cluster to obtain the number requested for the current run
 def apply_cluster_configuration(run, clusters):
     print(colored("Adjusting clusters configuration...", "yellow"))
-    
+
     for c in clusters:
         cluster = clusters[c]
-        
-        closest_parallelism = get_closest_parallelism_level(run["parallelism"], cluster["possible_parallelism"], c, False)
-        
+
+        closest_parallelism = get_closest_parallelism_level(run["parallelism"], cluster["possible_parallelism"], c,
+                                                            False)
+
         client = configure_ssh_client(cluster)
         node_list = get_node_list(client)
-        
+
         requested_number_of_nodes = cluster["possible_parallelism"][closest_parallelism][1]
 
         show_debug_info(make_debug_info(["Cluster configuration BEFORE:"] + node_list))
