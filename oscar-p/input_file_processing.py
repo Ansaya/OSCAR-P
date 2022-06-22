@@ -475,6 +475,8 @@ def show_runs(base, repetitions, clusters):
 #   GETTERS   #
 ###############
 
+# todo make sure that useless stuff is removed
+
 def get_cluster_name():
     with open("input.yaml", "r") as file:
         cluster_name = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["cluster"]["name"]
@@ -497,12 +499,6 @@ def get_run_info():
     with open("input.yaml", "r") as file:
         i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["run"]
         return i["name"], i["repetitions"], i["cooldown_time"]
-
-
-def get_worker_nodes_info():
-    with open("input.yaml", "r") as file:
-        i = yaml.load(file, Loader=yaml.FullLoader)["configuration"]["worker_nodes"]
-        return i["total_nodes"], i["max_cpu_cores"], i["max_memory_mb"]
 
 
 def get_time_correction():

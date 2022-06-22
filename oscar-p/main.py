@@ -29,16 +29,15 @@ def prepare_clusters():
 
 
 def start_run_full():
-    # move_files_to_input_bucket(run["services"][0])
-    # wait_services_completion(simple_services, clusters)
-    return
+    move_files_to_input_bucket(run["services"][0])
+    wait_services_completion(simple_services, clusters)
 
 
 def end_run_full():
     working_dir = os.path.join(campaign_dir, run["id"], "full")
     os.mkdir(working_dir)
     pull_logs(working_dir, simple_services, clusters)
-    make_csv_table(working_dir, run["services"], run["nodes"])
+    make_csv_table(working_dir, run, clusters)
     # download_bucket(campaign_dir + "/Database", "database")
 
 
@@ -170,7 +169,7 @@ for i in range(s, len(runs)):
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
     simple_services = get_simple_services(run["services"])
 
-    # prepare_clusters()
+    prepare_clusters()
     start_run_full()
     end_run_full()
     test_single_services()
