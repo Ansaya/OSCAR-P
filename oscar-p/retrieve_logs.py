@@ -7,7 +7,7 @@ from termcolor import colored
 from datetime import datetime, timedelta
 
 from input_file_processing import get_time_correction
-from cluster_manager import set_default_oscar_cluster
+from cluster_manager import set_default_oscar_cluster, get_active_cluster
 from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info
 
 global run_name
@@ -24,8 +24,7 @@ def pull_logs(name, services, clusters):
 
     for service in services:
         service_name = service["name"]
-        cluster_name = service["cluster"]
-        cluster = clusters[cluster_name]
+        cluster = get_active_cluster(service, clusters)
         client = configure_ssh_client(cluster)
         timed_job_list = get_timed_jobs_list(service_name, client, cluster)
         save_timelist_to_file(timed_job_list, service_name)

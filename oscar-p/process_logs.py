@@ -8,7 +8,7 @@ import shutil
 from termcolor import colored
 from zipfile import ZipFile, ZIP_DEFLATED
 
-
+from cluster_manager import get_active_cluster
 from input_file_processing import get_closest_parallelism_level
 
 
@@ -23,11 +23,10 @@ def make_csv_table(working_dir, run, clusters):
     for service in services:
 
         service_name = service["name"]
-        cluster_name = service["cluster"]
-        cluster = clusters[cluster_name]
+        cluster = get_active_cluster(service, clusters)
 
         closest_parallelism = get_closest_parallelism_level(requested_parallelism,
-                                                            cluster["possible_parallelism"], cluster_name, False)
+                                                            cluster["possible_parallelism"], "", False)
 
         cores_container, nodes_used, memory_container = cluster["possible_parallelism"][closest_parallelism]
         # print(cores_container, nodes, memory_container)

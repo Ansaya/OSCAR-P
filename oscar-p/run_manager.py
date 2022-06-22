@@ -7,7 +7,7 @@ from termcolor import colored
 from tqdm import tqdm
 
 from input_file_processing import get_workflow_input
-from cluster_manager import set_default_oscar_cluster
+from cluster_manager import set_default_oscar_cluster, get_active_cluster
 from utils import get_command_output_wrapped, show_error, auto_mkdir
 
 
@@ -105,8 +105,7 @@ def wait_services_completion(services, clusters):
     for service in services:
         completed = False
         service_name = service["name"]
-        cluster_name = service["cluster"]
-        cluster = clusters[cluster_name]
+        cluster = get_active_cluster(service, clusters)
         print(colored("Waiting for service " + service_name + " completion...", "yellow"))
         time.sleep(sleep_interval)
         

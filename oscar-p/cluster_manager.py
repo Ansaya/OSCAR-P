@@ -44,10 +44,11 @@ def remove_all_buckets(clusters):
     return
 
 
-def create_bucket(bucket):
-    print(colored("Recreating bucket " + bucket + "...", "yellow"))
-    mc_alias = get_mc_alias()
-    command = "oscar-p/mc mb " + mc_alias + "/" + bucket
+def create_bucket(bucket, cluster_name, clusters):
+    cluster = clusters[cluster_name]
+    print(colored("Creating bucket " + bucket + " on cluster " + cluster_name + "...", "yellow"))
+    minio_alias = cluster["minio_alias"]
+    command = "oscar-p/mc mb " + minio_alias + "/" + bucket
     get_command_output_wrapped(command)
     print(colored("Done!", "green"))
     return
@@ -249,8 +250,17 @@ def get_deployed_services(cluster):
     return deployed_services
 
 
+def get_active_cluster(service, clusters):
+    cluster_name = service["cluster"]
+    cluster = clusters[cluster_name]
+    return cluster
+
+
 def set_default_oscar_cluster(cluster):
-    oscarcli_alias = cluster["oscarcli_alias"]
+    set_default_oscar_cluster_from_alias(cluster["oscarcli_alias"])
+
+
+def set_default_oscar_cluster_from_alias(oscarcli_alias):
     command = "./oscar-p/oscar-cli cluster default -s " + oscarcli_alias
     get_command_output_wrapped(command)
 

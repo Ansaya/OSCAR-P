@@ -7,10 +7,10 @@ from termcolor import colored
 
 from cluster_manager import remove_all_buckets, clean_all_logs, generate_fdl_configuration, apply_cluster_configuration, \
     generate_fdl_single_service, remove_all_services, create_bucket, apply_fdl_configuration_wrapped, \
-    recreate_output_buckets, set_default_oscar_cluster
-from input_file_processing import show_workflow, run_scheduler, show_runs, get_cluster_name, \
-    get_run_info, get_test_single_components, get_service_by_name, get_use_ml_library, get_clusters_info, \
-    consistency_check, get_simple_services
+    recreate_output_buckets
+from gui import show_runs
+from input_file_processing import show_workflow, run_scheduler, get_run_info, get_test_single_components, \
+    get_service_by_name, get_use_ml_library, get_clusters_info, consistency_check, get_simple_services
 from postprocessing import prepare_runtime_data, plot_runtime_core_graphs, make_runtime_core_csv, \
     make_runtime_core_csv_for_ml, plot_ml_predictions_graphs, save_dataframes, make_statistics
 from process_logs import make_csv_table
@@ -45,11 +45,13 @@ def test_single_services():
     if not get_test_single_components():
         return
 
-    create_bucket("dead-start")
+    for cluster_name in clusters:
+        create_bucket("dead-start", cluster_name, clusters)
+
     is_first_service = True
-    for i in range(len(ordered_services)):
-        start_run_service(ordered_services[i]["name"], is_first_service)
-        end_run_service(get_service_by_name(ordered_services[i]["name"], run["services"]))
+    for i in range(len(simple_services)):
+        start_run_service(simple_services[i]["name"], is_first_service)
+        end_run_service(get_service_by_name(simple_services[i]["name"], run["services"]))
         is_first_service = False
 
 
@@ -58,7 +60,8 @@ def start_run_service(service_name, is_first_service):
     clean_all_logs()
     service = get_service_by_name(service_name, run["services"])
 
-    remove_all_services()
+    remove_all_services(clusters)
+    quit()
     generate_fdl_single_service(service, cluster_name)
     apply_fdl_configuration_wrapped([service])
     recreate_output_buckets(service)
@@ -169,9 +172,9 @@ for i in range(s, len(runs)):
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
     simple_services = get_simple_services(run["services"])
 
-    prepare_clusters()
-    start_run_full()
-    end_run_full()
+    # prepare_clusters()
+    # start_run_full()
+    # end_run_full()
     test_single_services()
 
 final_processing()
