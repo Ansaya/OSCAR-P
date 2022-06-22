@@ -24,7 +24,7 @@ def make_csv_table(working_dir, services, nodes_used):
         with open(working_dir + "/time_table_" + service_name + ".pkl", "rb") as file:
             timed_job_list = pickle.load(file)
 
-        header = ["job_name", "service", "node",
+        header = ["job_name", "service", "cluster", "node",
                   "cores_container", "cores_total", "memory_container", "memory_total", "nodes_used", "nodes_total",
                   "full_time", "wait", "pod_creation", "overhead", "compute_time", "write_back"
                   ]

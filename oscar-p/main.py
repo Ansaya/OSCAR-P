@@ -26,19 +26,18 @@ def prepare_clusters():
     apply_cluster_configuration(run, clusters)
     generate_fdl_configuration(run, clusters)
     apply_fdl_configuration_wrapped(run["services"], clusters)
-    quit()
 
 
 def start_run_full():
-    move_files_to_input_bucket(run["services"][0])
-    quit()
-    wait_services_completion(ordered_services)
+    # move_files_to_input_bucket(run["services"][0])
+    # wait_services_completion(simple_services, clusters)
+    return
 
 
 def end_run_full():
     working_dir = os.path.join(campaign_dir, run["id"], "full")
     os.mkdir(working_dir)
-    pull_logs(working_dir, ordered_services)
+    pull_logs(working_dir, simple_services, clusters)
     make_csv_table(working_dir, run["services"], run["nodes"])
     # download_bucket(campaign_dir + "/Database", "database")
 
@@ -148,14 +147,14 @@ def test():
     quit()
 
 
-simple_services = get_simple_services()
-consistency_check(simple_services)
-show_workflow(simple_services)
-
 clusters = get_clusters_info()
 base, runs = run_scheduler()
+simple_services = get_simple_services(runs[0]["services"])
 campaign_name, repetitions, cooldown = get_run_info()
-# show_runs(base, repetitions, clusters)
+
+consistency_check(simple_services)
+show_workflow(simple_services)
+show_runs(base, repetitions, clusters)
 
 campaign_dir = "runs-results/" + campaign_name
 
@@ -169,8 +168,9 @@ for i in range(s, len(runs)):
     run = runs[i]
     print(colored("\nStarting " + run["id"] + " of " + str(len(runs)), "blue"))
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
+    simple_services = get_simple_services(run["services"])
 
-    prepare_clusters()
+    # prepare_clusters()
     start_run_full()
     end_run_full()
     test_single_services()

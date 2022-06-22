@@ -7,6 +7,7 @@ from termcolor import colored
 from tqdm import tqdm
 
 from input_file_processing import get_workflow_input
+from cluster_manager import set_default_oscar_cluster
 from utils import get_command_output_wrapped, show_error, auto_mkdir
 
 
@@ -22,6 +23,7 @@ def wait_interval(distribution, inter_upload_time):
 
 
 # move files to the input bucket, starting the workflow execution
+# todo what happens if file is not there? it should be uploaded by OSCAR-P, add function
 def move_files_to_input_bucket(service):
     print(colored("Moving input files...", "yellow"))
     minio_alias = service["minio_alias"]
@@ -62,7 +64,10 @@ def move_whole_bucket(origin_bucket, destination_bucket):
 
 
 # given a service, returns the list of jobs with their status
-def get_jobs_list(service_name):
+def get_jobs_list(service_name, cluster):
+
+    set_default_oscar_cluster(cluster)
+
     command = "oscar-p/oscar-cli service logs list " + service_name
     logs_list = get_command_output_wrapped(command)
 
@@ -94,16 +99,18 @@ def increment_sleep(sleep):
 
 
 # awaits the completion of all the jobs before passing to processing
-def wait_services_completion(services):
+def wait_services_completion(services, clusters):
     sleep_interval = 10
 
     for service in services:
         completed = False
         service_name = service["name"]
+        cluster_name = service["cluster"]
+        cluster = clusters[cluster_name]
         print(colored("Waiting for service " + service_name + " completion...", "yellow"))
         time.sleep(sleep_interval)
         
-        job_list = get_jobs_list(service_name)
+        job_list = get_jobs_list(service_name, cluster)
         pbar = tqdm(total=len(job_list))
         
         while not completed:
@@ -122,7 +129,7 @@ def wait_services_completion(services):
             pbar.refresh()
             if not completed:
                 time.sleep(increment_sleep(sleep_interval))
-                job_list = get_jobs_list(service_name)
+                job_list = get_jobs_list(service_name, cluster)
         pbar.close()
         print(colored("Service " + service_name + " completed!", "green"))
     return

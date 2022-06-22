@@ -6,36 +6,41 @@ import os
 from termcolor import colored
 from datetime import datetime, timedelta
 
-from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info
 from input_file_processing import get_time_correction
+from cluster_manager import set_default_oscar_cluster
+from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info
 
 global run_name
 
 
 # todo must comment more everywhere
 
-def pull_logs(name, services):
+def pull_logs(name, services, clusters):
     print(colored("Collecting logs...", "yellow"))
     global run_name
     run_name = name
     os.system("mkdir \"" + run_name + "/logs_kubectl\"")
     os.system("mkdir \"" + run_name + "/logs_oscar\"")
 
-    client = configure_ssh_client()
-
     for service in services:
         service_name = service["name"]
-        save_timelist_to_file(get_timed_jobs_list(service_name, client), service_name)
+        cluster_name = service["cluster"]
+        cluster = clusters[cluster_name]
+        client = configure_ssh_client(cluster)
+        timed_job_list = get_timed_jobs_list(service_name, client, cluster)
+        save_timelist_to_file(timed_job_list, service_name)
 
     print(colored("Done!", "green"))
 
 
 # for a given service, it saves as text file a copy of the logs from OSCAR and kubectl, and also returns a timelist
 # todo explain better in comment
-def get_timed_jobs_list(service, client):
+def get_timed_jobs_list(service, client, cluster):
     date_format = "%Y-%m-%d %H:%M:%S"
 
     pod_list = get_kubernetes_pod_list(client)
+
+    set_default_oscar_cluster(cluster)
 
     command = "oscar-p/oscar-cli service logs list " + service
     logs_list = get_command_output_wrapped(command)
@@ -67,6 +72,7 @@ def get_timed_jobs_list(service, client):
         bash_script_start, bash_script_end = get_oscar_log(service, job_name)
 
         timed_job_list[job_name] = {"service": service,
+                                    "cluster": cluster,
                                     "node": pod_node,
                                     "job_create": job_create,
                                     "pod_create": pod_creation,

@@ -28,22 +28,21 @@ def consistency_check(services):
     return
 
 
-def get_simple_services():
+def get_simple_services(services):
     """
     makes a list of the services with only very basic info, such as the service name and its buckets
     :return: list of services with only basic info, such as the service name and its buckets
     """
-    with open("input.yaml", "r") as file:
-        script_config = yaml.load(file, Loader=yaml.FullLoader)["configuration"]
-        simple_services = []
-        for s in script_config["services"]:
-            service_name = list(s.keys())[0]
-            service = {
-                "name": service_name,
-                "input": s[service_name]["input_bucket"],
-                "outputs": get_buckets_name_from_list(s[service_name]["output_buckets"]),
-                }
-            simple_services.append(service)
+
+    simple_services = []
+    for s in services:
+        service = {
+            "name": s["name"],
+            "cluster": s["cluster"],
+            "input": s["input_bucket"],
+            "outputs": get_buckets_name_from_list(s["output_buckets"]),
+            }
+        simple_services.append(service)
 
     return simple_services
 
