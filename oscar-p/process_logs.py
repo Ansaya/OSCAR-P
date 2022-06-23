@@ -14,11 +14,11 @@ from input_file_processing import get_closest_parallelism_level
 
 # given a run, it creates a CSV file containing all the jobs of every service (as red from the timelists)
 # todo can probably be split into sub-functions
-def make_csv_table(working_dir, run, clusters):
+def make_csv_table(working_dir, services, requested_parallelism, clusters):
     print(colored("Processing logs...", "yellow"))
 
-    services = run["services"]
-    requested_parallelism = run["parallelism"]
+    # services = run["services"]
+    # requested_parallelism = run["parallelism"]
 
     for service in services:
 
@@ -34,7 +34,6 @@ def make_csv_table(working_dir, run, clusters):
         cores_total, memory_total = cluster["max_cpu_cores"], cluster["max_memory_mb"]
         total_nodes = cluster["total_nodes"]
         # print(cores_total, total_nodes, memory_total)
-        quit()
 
         with open(working_dir + "/time_table_" + service_name + ".pkl", "rb") as file:
             timed_job_list = pickle.load(file)

@@ -54,9 +54,8 @@ def create_bucket(bucket, cluster_name, clusters):
     return
 
 
-def recreate_bucket(bucket):
-    mc_alias = get_mc_alias()
-    bucket = mc_alias + "/" + bucket
+def recreate_bucket(bucket, minio_alias):
+    bucket = minio_alias + "/" + bucket
     command = "oscar-p/mc rb " + bucket + " --force"
     get_command_output_wrapped(command)
     command = "oscar-p/mc mb " + bucket
@@ -65,11 +64,8 @@ def recreate_bucket(bucket):
 
 
 def recreate_output_buckets(service):
-    print(service)
-    print(service["output_buckets"])
-    quit()
     for b in service["output_buckets"]:
-        recreate_bucket(b["path"])
+        recreate_bucket(b["path"], b["minio_alias"])
     return
 
 
@@ -115,26 +111,10 @@ def make_fdl_buckets_list(buckets):
 def generate_fdl_configuration(services, clusters):
     with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
 
-        cluster = None
-
         fdl_services = []
         for current_service in services:
 
-            # current_service = services[i]
-            # current_cluster_name = current_service["cluster"]
-            # oscarcli_alias = clusters[current_cluster_name]["oscarcli_alias"]
-
             oscarcli_alias = current_service["oscarcli_alias"]
-
-            # the output bucket of one service, should be on the same cluster as the next service
-            # this way the output bucket matches the input bucket of the next service
-            """
-            if i == (len(services) - 1):
-                next_cluster_name = current_cluster_name
-            else:
-                next_service = services[i + 1]
-                next_cluster_name = next_service["cluster"]
-            """
 
             fdl_service = {oscarcli_alias: {
                 "cpu": current_service["cpu"],
@@ -157,18 +137,17 @@ def generate_fdl_configuration(services, clusters):
 
 
 # generate the FDL file used to prepare OSCAR, including only the specified service
-def generate_fdl_single_service(services, index, clusters):
+def generate_fdl_single_service(service, clusters):
+    print(service)
 
-    service = services[index]
+    original_input_bucket = service["input_bucket"]
+    service["input_bucket"] = "dead-start"
 
-    # if I'm processing the last service, I can pass only that and it'll work
-    if index == (len(services) - 1):
-        generate_fdl_configuration([service], clusters)
-    else:
-        next_service = services[index + 1]
-        generate_fdl_configuration([service, next_service], clusters)
+    print(service)
 
-    return
+    generate_fdl_configuration([service], clusters)
+
+    service["input_bucket"] = original_input_bucket
 
 
 def generate_fdl_storage_providers(clusters):
@@ -199,10 +178,9 @@ def _apply_fdl_configuration():
     return
 
 
-def apply_fdl_configuration_wrapped(services, clusters):
+def apply_fdl_configuration_wrapped(services):
     """
 
-    :param clusters:
     :param services:
     :return:
     """
@@ -210,12 +188,12 @@ def apply_fdl_configuration_wrapped(services, clusters):
     print(colored("Adjusting OSCAR configuration...", "yellow"))
     while True:
         _apply_fdl_configuration()
-        if verify_correct_fdl_deployment(services, clusters):
+        if verify_correct_fdl_deployment(services):
             break
     print(colored("Done!", "green"))
 
 
-def verify_correct_fdl_deployment(services, clusters):
+def verify_correct_fdl_deployment(services):
     """
     after applying the FDL file, makes sure that all the required services are deployed
     """
@@ -223,8 +201,7 @@ def verify_correct_fdl_deployment(services, clusters):
     print(colored("Checking correct deployment...", "yellow"))
 
     for s in services:
-        active_cluster = clusters[s["cluster"]]
-        deployed_services = get_deployed_services(active_cluster)
+        deployed_services = get_deployed_services(s["oscarcli_alias"])
 
         if s["name"] not in deployed_services:
             show_warning("Service " + s["name"] + " not deployed")
@@ -235,8 +212,8 @@ def verify_correct_fdl_deployment(services, clusters):
     return True
 
 
-def get_deployed_services(cluster):
-    set_default_oscar_cluster(cluster)
+def get_deployed_services(oscarcli_alias):
+    set_default_oscar_cluster_from_alias(oscarcli_alias)
     command = "oscar-p/oscar-cli service list"
     output = get_command_output_wrapped(command)
 
@@ -293,15 +270,15 @@ def get_node_list(client):
     return node_list
 
 
-# cordons or uncordons the nodes of the cluster to obtain the number requested for the current run
+# cordons or un-cordons the nodes of the cluster to obtain the number requested for the current run
 def apply_cluster_configuration(run, clusters):
     print(colored("Adjusting clusters configuration...", "yellow"))
 
     for c in clusters:
         cluster = clusters[c]
 
-        closest_parallelism = get_closest_parallelism_level(run["parallelism"], cluster["possible_parallelism"], c,
-                                                            False)
+        closest_parallelism = get_closest_parallelism_level(run["parallelism"],
+                                                            cluster["possible_parallelism"], c, False)
 
         client = configure_ssh_client(cluster)
         node_list = get_node_list(client)

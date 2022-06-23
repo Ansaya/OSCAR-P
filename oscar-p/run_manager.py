@@ -7,7 +7,7 @@ from termcolor import colored
 from tqdm import tqdm
 
 from input_file_processing import get_workflow_input
-from cluster_manager import set_default_oscar_cluster, get_active_cluster
+from cluster_manager import set_default_oscar_cluster_from_alias
 from utils import get_command_output_wrapped, show_error, auto_mkdir
 
 
@@ -52,11 +52,12 @@ def move_file_between_buckets(origin_file, origin_bucket, destination_file, dest
     return
 
 
-def move_whole_bucket(origin_bucket, destination_bucket):
+def move_dead_start_bucket(service):
     print(colored("Duplicating bucket...", "yellow"))
-    mc_alias = get_mc_alias()
-    origin = mc_alias + "/" + origin_bucket
-    destination = mc_alias + "/" + destination_bucket
+    minio_alias = service["minio_alias"]
+    origin = minio_alias + "/" + service["input_bucket"]
+    destination = minio_alias + "/" + "dead-start"
+    set_default_oscar_cluster_from_alias(service["oscarcli_alias"])
     command = "oscar-p/mc cp " + origin + " " + destination + " -r"
     get_command_output_wrapped(command)
     print(colored("Done!", "green"))
@@ -64,9 +65,9 @@ def move_whole_bucket(origin_bucket, destination_bucket):
 
 
 # given a service, returns the list of jobs with their status
-def get_jobs_list(service_name, cluster):
+def get_jobs_list(service_name, oscarcli_alias):
 
-    set_default_oscar_cluster(cluster)
+    set_default_oscar_cluster_from_alias(oscarcli_alias)
 
     command = "oscar-p/oscar-cli service logs list " + service_name
     logs_list = get_command_output_wrapped(command)
@@ -99,17 +100,17 @@ def increment_sleep(sleep):
 
 
 # awaits the completion of all the jobs before passing to processing
-def wait_services_completion(services, clusters):
+def wait_services_completion(services):
     sleep_interval = 10
 
     for service in services:
         completed = False
         service_name = service["name"]
-        cluster = get_active_cluster(service, clusters)
+        # cluster = get_active_cluster(service, clusters)
         print(colored("Waiting for service " + service_name + " completion...", "yellow"))
         time.sleep(sleep_interval)
         
-        job_list = get_jobs_list(service_name, cluster)
+        job_list = get_jobs_list(service_name, service["oscarcli_alias"])
         pbar = tqdm(total=len(job_list))
         
         while not completed:
@@ -128,7 +129,7 @@ def wait_services_completion(services, clusters):
             pbar.refresh()
             if not completed:
                 time.sleep(increment_sleep(sleep_interval))
-                job_list = get_jobs_list(service_name, cluster)
+                job_list = get_jobs_list(service_name, service["oscarcli_alias"])
         pbar.close()
         print(colored("Service " + service_name + " completed!", "green"))
     return

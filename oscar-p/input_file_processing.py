@@ -213,7 +213,7 @@ def get_possible_parallelisms(total_nodes, max_cores, max_memory):
         for n in range(1, int(total_nodes) + 1):
             p = c * n
             cores = max_cores / c
-            mem = int((max_memory - 128) / c)
+            mem = int((max_memory * 0.8) / c)
             cores = round(cores, 1) - 0.1
             possible_parallelism[p] = (cores, n, mem)
     return possible_parallelism
