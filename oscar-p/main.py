@@ -21,11 +21,12 @@ from utils import show_error, auto_mkdir, show_warning, delete_directory
 
 
 def prepare_clusters():
-    remove_all_services(clusters)
-    remove_all_buckets(clusters)
-    apply_cluster_configuration(run, clusters)
-    generate_fdl_configuration(run, clusters)
+    # remove_all_services(clusters)
+    # remove_all_buckets(clusters)
+    # apply_cluster_configuration(run, clusters)
+    generate_fdl_configuration(run["services"], clusters)
     apply_fdl_configuration_wrapped(run["services"], clusters)
+    quit()
 
 
 def start_run_full():
@@ -45,26 +46,29 @@ def test_single_services():
     if not get_test_single_components():
         return
 
+    """
     for cluster_name in clusters:
         create_bucket("dead-start", cluster_name, clusters)
+    """
 
     is_first_service = True
-    for i in range(len(simple_services)):
-        start_run_service(simple_services[i]["name"], is_first_service)
-        end_run_service(get_service_by_name(simple_services[i]["name"], run["services"]))
+    services = run["services"]
+    for index in range(len(services)):
+        start_run_service(services, index, is_first_service)
+        quit()
+        end_run_service(get_service_by_name(simple_services[index]["name"], run["services"]))
         is_first_service = False
 
 
-def start_run_service(service_name, is_first_service):
-    print(colored("\nStarting " + run["id"] + " - " + service_name, "blue"))
-    clean_all_logs()
-    service = get_service_by_name(service_name, run["services"])
+def start_run_service(services, index, is_first_service):
+    current_service = services[index]
+    print(colored("\nStarting " + run["id"] + " - " + current_service["name"], "blue"))
+    # service = get_service_by_name(service_name, run["services"])
 
     remove_all_services(clusters)
-    quit()
-    generate_fdl_single_service(service, cluster_name)
-    apply_fdl_configuration_wrapped([service])
-    recreate_output_buckets(service)
+    generate_fdl_single_service(services, index, clusters)
+    apply_fdl_configuration_wrapped([current_service], clusters)
+    recreate_output_buckets(current_service)
 
     if is_first_service:
         move_files_to_input_bucket("dead-start")
@@ -154,9 +158,12 @@ base, runs = run_scheduler()
 simple_services = get_simple_services(runs[0]["services"])
 campaign_name, repetitions, cooldown = get_run_info()
 
+# print(clusters["vm_cluster"])
+# print(runs[0]["services"][0])
+
 consistency_check(simple_services)
-show_workflow(simple_services)
-show_runs(base, repetitions, clusters)
+# show_workflow(simple_services)
+# show_runs(base, repetitions, clusters)
 
 campaign_dir = "runs-results/" + campaign_name
 
@@ -172,7 +179,7 @@ for i in range(s, len(runs)):
     os.mkdir(os.path.join(campaign_dir, run["id"]))  # creates the working directory
     simple_services = get_simple_services(run["services"])
 
-    # prepare_clusters()
+    prepare_clusters()
     # start_run_full()
     # end_run_full()
     test_single_services()

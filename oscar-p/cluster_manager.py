@@ -65,6 +65,9 @@ def recreate_bucket(bucket):
 
 
 def recreate_output_buckets(service):
+    print(service)
+    print(service["output_buckets"])
+    quit()
     for b in service["output_buckets"]:
         recreate_bucket(b["path"])
     return
@@ -85,15 +88,11 @@ def clean_all_logs():
     return
 
 
-def make_fdl_buckets_list(buckets, current_cluster_name, next_cluster_name):
+def make_fdl_buckets_list(buckets):
     bucket_list = []
 
-    if current_cluster_name == next_cluster_name:
-        storage_provider = "minio.default"
-    else:
-        storage_provider = "minio." + next_cluster_name
-
     for b in buckets:
+        storage_provider = "minio." + b["minio_alias"]
 
         prefix = []
         for p in b["prefix"]:
@@ -113,23 +112,31 @@ def make_fdl_buckets_list(buckets, current_cluster_name, next_cluster_name):
 
 
 # generate the FDL file used to prepare OSCAR, starting from the input yaml
-def generate_fdl_configuration(run, clusters):
+def generate_fdl_configuration(services, clusters):
     with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
 
-        services = []
-        for i in range(len(run["services"])):
+        cluster = None
 
-            current_service = run["services"][i]
-            current_cluster_name = current_service["cluster"]
-            oscarcli_alias = clusters[current_cluster_name]["oscarcli_alias"]
+        fdl_services = []
+        for current_service in services:
 
-            if i == (len(run["services"]) - 1):
+            # current_service = services[i]
+            # current_cluster_name = current_service["cluster"]
+            # oscarcli_alias = clusters[current_cluster_name]["oscarcli_alias"]
+
+            oscarcli_alias = current_service["oscarcli_alias"]
+
+            # the output bucket of one service, should be on the same cluster as the next service
+            # this way the output bucket matches the input bucket of the next service
+            """
+            if i == (len(services) - 1):
                 next_cluster_name = current_cluster_name
             else:
-                next_service = run["services"][i + 1]
+                next_service = services[i + 1]
                 next_cluster_name = next_service["cluster"]
+            """
 
-            service = {oscarcli_alias: {
+            fdl_service = {oscarcli_alias: {
                 "cpu": current_service["cpu"],
                 "memory": current_service["memory"] + "Mi",
                 "image": current_service["image"],
@@ -139,37 +146,29 @@ def generate_fdl_configuration(run, clusters):
                     "path": current_service["input_bucket"],
                     "storage_provider": "minio.default"
                 }],
-                "output": make_fdl_buckets_list(current_service["output_buckets"],
-                                                current_cluster_name, next_cluster_name)
+                "output": make_fdl_buckets_list(current_service["output_buckets"])
                 }
             }
-            services.append(service)
+            fdl_services.append(fdl_service)
 
-        fdl_config = {"functions": {"oscar": services},
+        fdl_config = {"functions": {"oscar": fdl_services},
                       "storage_providers": {"minio": generate_fdl_storage_providers(clusters)}}
         yaml.dump(fdl_config, file)
 
 
 # generate the FDL file used to prepare OSCAR, including only the specified service
-def generate_fdl_single_service(service, cluster_name):
-    with open(r'oscar-p/FDL_configuration.yaml', 'w') as file:
-        services = [{cluster_name: {
-            "cpu": service["cpu"],
-            "memory": service["memory"] + "Mi",
-            "image": service["image"],
-            "name": service["name"],
-            "script": service["script"],
-            "input": [{
-                "path": "dead-start",
-                "storage_provider": "minio.default"
-            }],
-            "output": make_fdl_buckets_list(service["output_buckets"])
-        }
-        }]
+def generate_fdl_single_service(services, index, clusters):
 
-        fdl_config = {"functions": {"oscar": services},
-                      "storage_providers": {"minio": generate_fdl_storage_providers()}}
-        yaml.dump(fdl_config, file)
+    service = services[index]
+
+    # if I'm processing the last service, I can pass only that and it'll work
+    if index == (len(services) - 1):
+        generate_fdl_configuration([service], clusters)
+    else:
+        next_service = services[index + 1]
+        generate_fdl_configuration([service, next_service], clusters)
+
+    return
 
 
 def generate_fdl_storage_providers(clusters):
@@ -184,7 +183,7 @@ def generate_fdl_storage_providers(clusters):
         cluster_minio_alias = clusters[c]["minio_alias"]
         cluster_info = minio_config["aliases"][cluster_minio_alias]
 
-        providers[c] = {
+        providers[cluster_minio_alias] = {
             "endpoint": cluster_info["url"],
             "access_key": cluster_info["accessKey"],
             "secret_key": cluster_info["secretKey"],
@@ -203,6 +202,7 @@ def _apply_fdl_configuration():
 def apply_fdl_configuration_wrapped(services, clusters):
     """
 
+    :param clusters:
     :param services:
     :return:
     """

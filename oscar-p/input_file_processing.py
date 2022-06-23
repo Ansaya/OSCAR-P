@@ -263,12 +263,24 @@ def base_scheduler_parallel(clusters, parallelism, services):
                 "memory": str(memory),
                 "image": image,
                 "cluster": current_cluster_name,
-                "script": current_service["script"],
+                "oscarcli_alias": current_cluster["oscarcli_alias"],
                 "minio_alias": minio_alias,
+                "script": current_service["script"],
                 "input_bucket": current_service["input_bucket"],
                 "output_buckets": current_service["output_buckets"],
                 }
             configured_services.append(new_service)
+
+        # makes sure that the output bucket of one service will match the input bucket of the next
+        for i in range(len(configured_services) - 1):
+            current_service = configured_services[i]
+            next_service = configured_services[i + 1]
+            for o in current_service["output_buckets"]:
+                o["minio_alias"] = next_service["minio_alias"]
+
+        current_service = configured_services[i + 1]
+        for o in current_service["output_buckets"]:
+            o["minio_alias"] = current_service["minio_alias"]
 
         # id will be added later on
         run = {
