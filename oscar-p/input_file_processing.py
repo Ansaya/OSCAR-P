@@ -193,7 +193,7 @@ def cycle_through_clusters(services, parallelism):
         # now that we have the temp_services list with a single cluster, we can call the actual run scheduler(s)
         # if the parallelism field is not empty it overrides the other fields
         if not isinstance(parallelism, type(None)):
-            base += base_scheduler_parallel(clusters, parallelism, temp_services)
+            base += base_scheduler_parallel(clusters, parallelism, temp_services, i + 1)
         else:
             return
 
@@ -220,12 +220,13 @@ def get_possible_parallelisms(total_nodes, max_cores, max_memory):
 
 
 # todo finish comments
-def base_scheduler_parallel(clusters, parallelism, services):
+def base_scheduler_parallel(clusters, parallelism, services, deployment_index):
     """
     schedules the base runs by using the "parallelism" array
     :param clusters:
     :param parallelism:
     :param services:
+    :param deployment_index:
     :return:
     """
 
@@ -286,6 +287,7 @@ def base_scheduler_parallel(clusters, parallelism, services):
         run = {
             "id": "",
             "parallelism": p,
+            "deployment": "Deployment #" + str(deployment_index),
             "services": configured_services
         }
         base.append(run)

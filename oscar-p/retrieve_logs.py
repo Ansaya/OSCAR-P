@@ -2,6 +2,7 @@
 
 import pickle
 import os
+from tqdm import tqdm
 
 from termcolor import colored
 from datetime import datetime, timedelta
@@ -22,7 +23,7 @@ def pull_logs(name, services, clusters):
     os.system("mkdir \"" + run_name + "/logs_kubectl\"")
     os.system("mkdir \"" + run_name + "/logs_oscar\"")
 
-    for service in services:
+    for service in tqdm(services):
         service_name = service["name"]
         cluster = get_active_cluster(service, clusters)
         client = configure_ssh_client(cluster)

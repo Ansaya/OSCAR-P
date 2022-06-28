@@ -145,39 +145,49 @@ def prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services):
     :return: two runtime/parallelism dataframes, complete and averaged
     """
 
+    # print(runs[0])
+
     runtimes = []
     parallelism = []
     run = []
+    deployment = []
 
     averaged_runtimes = []
     averaged_parallelism = []
+    averaged_deployment = []
 
     base_length = int(len(runs) / repetitions)
 
     for i in range(base_length):
         runtimes_to_average = []
         for j in range(repetitions):
-            working_dir = os.path.join(campaign_dir, runs[i + (j * base_length)]["id"], subfolder)
+            current_index = i*repetitions + j
+            current_run = runs[current_index]
+            working_dir = os.path.join(campaign_dir, current_run["id"], subfolder)
             runtime = calculate_runtime(working_dir, services)
             runtimes_to_average.append(runtime)
             runtimes.append(runtime)
-            parallelism.append(calculate_maximum_parallelism(runs[i]))
+            parallelism.append(current_run["parallelism"])
             run.append("Run #" + str(j + 1))
+            deployment.append(current_run["deployment"])
         average_runtime = calculate_average(runtimes_to_average)
         average_runtime = round(average_runtime, 3)
 
         averaged_runtimes.append(average_runtime)
-        averaged_parallelism.append(calculate_maximum_parallelism(runs[i]))
+        averaged_parallelism.append(current_run["parallelism"])
+        averaged_deployment.append(current_run["deployment"])
 
     data = {
         "runtime": runtimes,
         "parallelism": parallelism,
+        "deployments": deployment,
         "runs": run
     }
 
     averaged_data = {
         "runtime": averaged_runtimes,
-        "parallelism": averaged_parallelism
+        "parallelism": averaged_parallelism,
+        "deployments": averaged_deployment
     }
 
     # dataframe
@@ -187,6 +197,8 @@ def prepare_runtime_data(campaign_dir, subfolder, repetitions, runs, services):
     # averaged_dataframe
     adf = pd.DataFrame(data=averaged_data)
     adf.sort_values(by=['parallelism'], inplace=True)
+
+    # print(df)
 
     return df, adf
 

@@ -138,15 +138,9 @@ def generate_fdl_configuration(services, clusters):
 
 # generate the FDL file used to prepare OSCAR, including only the specified service
 def generate_fdl_single_service(service, clusters):
-    print(service)
-
     original_input_bucket = service["input_bucket"]
     service["input_bucket"] = "dead-start"
-
-    print(service)
-
     generate_fdl_configuration([service], clusters)
-
     service["input_bucket"] = original_input_bucket
 
 

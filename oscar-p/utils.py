@@ -30,7 +30,7 @@ def _get_command_output(command):
 
 
 def get_command_output_wrapped(command):
-    for t in [5, 5, 10, 15, 30, 60, 120, 5*60, 10*60]:
+    for t in [5, 5, 10, 15, 30, 60, 120, 5*60, 10*60, 15*60]:
         lines, errors = _get_command_output(command)
         if errors:  # empty list equals to False
             show_warning("Errors encountered, retrying in " + str(t) + " seconds")

@@ -24,7 +24,7 @@ def wait_interval(distribution, inter_upload_time):
 
 # move files to the input bucket, starting the workflow execution
 # todo what happens if file is not there? it should be uploaded by OSCAR-P, add function
-def move_files_to_input_bucket(service):
+def move_input_files_to_input_bucket(service):
     print(colored("Moving input files...", "yellow"))
     minio_alias = service["minio_alias"]
     storage_bucket = minio_alias + "/" + "storage"
@@ -43,6 +43,25 @@ def move_files_to_input_bucket(service):
     return
 
 
+def move_input_files_to_dead_start_bucket(service):
+    print(colored("Moving input files...", "yellow"))
+    minio_alias = service["minio_alias"]
+    storage_bucket = minio_alias + "/" + "storage"
+    input_bucket = minio_alias + "/" + "dead-start"
+
+    filename, number_of_files, distribution, inter_upload_time = get_workflow_input()
+    stripped_filename, extension = filename.split(".")
+
+    for i in tqdm(range(0, number_of_files)):
+        destination_file = stripped_filename + "_" + str(i) + "." + extension
+        move_file_between_buckets(filename, storage_bucket, destination_file, input_bucket)
+
+        wait = wait_interval(distribution, inter_upload_time)
+        time.sleep(wait)
+    print(colored("Done!", "green"))
+    return
+
+
 # origin and destination bucket must already include the minio_alias, i.e. "minio-vm/storage"
 def move_file_between_buckets(origin_file, origin_bucket, destination_file, destination_bucket):
     origin = origin_bucket + "/" + origin_file
@@ -52,7 +71,7 @@ def move_file_between_buckets(origin_file, origin_bucket, destination_file, dest
     return
 
 
-def move_dead_start_bucket(service):
+def move_bucket_to_dead_start_bucket(service):
     print(colored("Duplicating bucket...", "yellow"))
     minio_alias = service["minio_alias"]
     origin = minio_alias + "/" + service["input_bucket"]
