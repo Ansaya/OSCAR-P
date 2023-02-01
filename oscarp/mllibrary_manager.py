@@ -5,7 +5,7 @@ import executables
 
 from termcolor import colored
 
-from utils import auto_mkdir
+from utils import auto_mkdir, read_json, write_json
 
 from aMLLibrary import sequence_data_processing
 # from aMLLibrary.model_building.predictor import Predictor
@@ -14,6 +14,9 @@ import global_parameters as gp
 
 
 def run_mllibrary():
+    add_to_performance_models_json()
+    exit()
+
     print(colored("\nGenerating models...", "blue"))
 
     # sets directories
@@ -134,3 +137,37 @@ def make_prediction(config_file, workdir):
         output_dir = workdir + "/output_predict_" + regressor_name
         predictor_obj = Predictor(regressor_file=regressor_path, output_folder=output_dir, debug=False)
         predictor_obj.predict(config_file=config_file, mape_to_file=True)
+
+
+def add_to_performance_models_json():
+    filepath = gp.application_dir + "oscarp/performance_models.json"
+    performance_models = read_json(filepath)
+
+    component_name, resource = gp.run_name.split('@')
+    component_name = component_name.replace("C", "component")
+
+    if "partition" in component_name:
+        component_name = component_name.replace("P", "partition")
+        partition_name = gp.components[component_name]["name"]
+        component_name = partition_name.split("_partition")[0]
+    else:
+        component_name = gp.components[component_name]["name"]
+        partition_name = component_name
+
+    model_type = "CoreBasedPredictor"
+    model_path = gp.results_dir + "Models/" + gp.run_name + "_model_SFS/best.pickle"  # urgent replace with real path
+
+    if component_name not in performance_models.keys():
+        performance_models[component_name] = {}
+
+    if partition_name not in performance_models[component_name].keys():
+        performance_models[component_name][partition_name] = {}
+
+    performance_models[component_name][partition_name][resource] = {
+        "model": model_type,
+        "regressor_file": model_path
+    }
+
+    write_json(filepath, performance_models)
+
+

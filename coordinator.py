@@ -19,7 +19,7 @@ import global_parameters as gp
 
 def main(input_dir):
 
-    gp.is_debug = False
+    gp.is_debug = True
     gp.set_application_dir(input_dir)
 
     if gp.is_debug:
@@ -52,9 +52,7 @@ def main(input_dir):
     # DEPLOYMENTS LOOP  #
     # # # # # # # # # # #
 
-    for deployment_index in range(len(gp.deployments)):
-        deployment_index = manage_deployment_dirs()
-
+    for deployment_index in range(manage_deployment_dirs(), len(gp.deployments)):
         print("\nTesting deployment_" + str(deployment_index) + ":")
 
         gp.set_current_deployment(deployment_index)
@@ -79,8 +77,10 @@ def main(input_dir):
 
         manage_runs_dir()
 
+        # print(gp.current_base_index, gp.current_run_index)
+        gp.current_base_index = 2  # todo rbf
+
         while gp.current_base_index < base_length:
-            # print(gp.current_base_index, gp.current_run_index)
 
             # set the stage for the current deployment, including creating the deployment directory
             gp.set_current_work_dir("Full_workflow")

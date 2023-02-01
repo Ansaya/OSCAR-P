@@ -166,8 +166,16 @@ def ensure_slash_end(path):
 
 
 def read_json(path):
+    if not os.path.exists(path):
+        return {}
+
     with open(path, 'r') as file:
         return json.load(file)
+
+
+def write_json(path, output):
+    with open(path, "w+") as file:
+        json.dump(output, file, indent=4)
 
 
 def read_yaml(path):

@@ -59,14 +59,12 @@ def test_single_lambda():
     wait_services_completion(services)
 
 
-def final_processing():
+def final_processing():  # TODO this needs to be moved/called elsewhere
     print(colored("\nFinal processing... " + banner_name, "blue"))
     auto_mkdir(gp.results_dir)
 
     process_subfolder(simple_services)
-    make_done_file(gp.results_dir)
-
-    return
+    # make_done_file(gp.results_dir)
 
     if gp.is_single_service_test:
         run_mllibrary()  # urgent generate performance models file
