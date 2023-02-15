@@ -231,19 +231,9 @@ def manage_deployment_dirs():
         deployment = "deployment_" + str(i)
         if deployment not in deployment_list:
             break
-        services_list = os.listdir(gp.campaign_dir + deployment)
-        if "campaign_summary.txt" in services_list:
-            services_list.remove("campaign_summary.txt")
-        if "input.yaml" in services_list:
-            services_list.remove("input.yaml")
 
-        # if a folder is missing, or it is present but not completed, then the deployment is not completed
-        if "Full_workflow" not in services_list or not has_completes_results(deployment, "Full_workflow"):
+        if not deployment_has_all_results(i):
             return i
-
-        for service in gp.deployments[i]:
-            if service not in services_list or not has_completes_results(deployment, service):
-                return i
 
     return i
 
@@ -295,6 +285,27 @@ def manage_runs_dir():
     gp.current_run_index = i
     delete_runs_past_index()
     return
+
+
+def deployment_has_all_results(deployment_index):
+
+    deployment = "deployment_" + str(deployment_index)
+
+    services_list = os.listdir(gp.campaign_dir + deployment)
+    if "campaign_summary.txt" in services_list:
+        services_list.remove("campaign_summary.txt")
+    if "input.yaml" in services_list:
+        services_list.remove("input.yaml")
+
+    # if a folder is missing, or it is present but not completed, then the deployment is not completed
+    if "Full_workflow" not in services_list or not has_completes_results(deployment, "Full_workflow"):
+        return False
+
+    for service in gp.deployments[deployment_index]:
+        if service not in services_list or not has_completes_results(deployment, service):
+            return False
+
+    return True
 
 
 # # # # # # # # # # # #

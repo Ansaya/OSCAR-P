@@ -71,6 +71,7 @@ def show_workflow(services):
         output_bucket = s["output"][2].split('/')[-1]
         print("\t" + colored(input_bucket) + " -> |" + colored(s["name"], "blue") + "| -> " + colored(output_bucket))
 
+    print()
     return
 
 

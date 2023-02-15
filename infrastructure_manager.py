@@ -25,7 +25,7 @@ import oscarp.oscarp as oscarp
 # Virtual infrastructures
 # # # # # # # # # # # #
 
-def create_virtual_infrastructures():  # urgent hide toscarizer dir, eg. ".toscarizer"
+def create_virtual_infrastructures(infrastructure_id_override):
 
     # virtual is the list of the infrastructures that need to be deployed
     # an infrastructure is added as long as: 1_ it's not AWS lambda, 2_ it's not physical, 3_ it's not already deployed
@@ -122,6 +122,9 @@ def clean_and_rename_tosca(tosca_file, component_name, resource, node_requiremen
 
     content["topology_template"]["inputs"]["domain_name"]["default"] = domain_name
 
+    content["topology_template"]["node_templates"]["oscar"]["properties"]["yunikorn_enable"] = True
+    content["topology_template"]["node_templates"]["lrms_front_end"]["properties"]["install_yunikorn"] = True
+
     del (content["topology_template"]["node_templates"]["oscar_service_" + component_name])
     del (content["topology_template"]["outputs"]["oscar_service_url"])
     del (content["topology_template"]["outputs"]["oscar_service_cred"])
@@ -181,9 +184,12 @@ def deploy_virtual_infrastructure(tosca_file, resource, inf_id):
         return
 
 
-def wait_for_infrastructure_deployment():
-    print(colored("Waiting for infrastructure deployment (this may take up to 15 minutes)...", "yellow"))
-    time.sleep(60*8)
+def wait_for_infrastructure_deployment(is_update=False):
+    if not is_update:
+        print(colored("Waiting for infrastructure deployment (this may take up to 15 minutes)...", "yellow"))
+        time.sleep(60*8)
+    else:
+        print(colored("Waiting for infrastructure update (this should take only a few minutes)...", "yellow"))
     completed = False
     while not completed:
         completed = True
@@ -233,7 +239,7 @@ def configure_executables():  # todo this will also have to include physical inf
         #set for mc
         minio_endpoint = outputs["minio_endpoint"]
         minio_password = outputs["minio_password"]
-        command = "cluster add minio-%s %s minio %s" % (resource, minio_endpoint, minio_password)
+        command = "alias set minio-%s %s minio %s" % (resource, minio_endpoint, minio_password)
         command = oscarp.executables.mc.get_command(command)
         get_command_output_wrapped(command)
 
@@ -272,22 +278,30 @@ def update_virtual_infrastructures():
         tosca_file_path = gp.virtual_infrastructures[resource]["tosca_file_path"]
         inf_id = gp.virtual_infrastructures[resource]["inf_id"]
 
-        update_tosca(tosca_file_path, resource, gp.clusters_node_requirements, gp.current_base_index)
-        deploy_virtual_infrastructure(tosca_file_path, resource, inf_id)
+        # returns True if number of nodes actually changed
+        if update_tosca(tosca_file_path, resource, gp.clusters_node_requirements, gp.current_base_index):
+            deploy_virtual_infrastructure(tosca_file_path, resource, inf_id)
 
-    wait_for_infrastructure_deployment()
+    wait_for_infrastructure_deployment(is_update=True)
 
 
 def update_tosca(tosca_file, resource, node_requirements, current_base_run_index):
-    with open(tosca_file, 'r+') as file:
+    with open(tosca_file, 'r') as file:
         content = yaml.safe_load(file)
 
-        content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"] = \
-            node_requirements[resource]["nodes"][current_base_run_index]
+    old_value = content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"]
+    new_value = node_requirements[resource]["nodes"][current_base_run_index]
 
+    if old_value == new_value:
+        return False
+
+    content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"] = \
+        new_value
+
+    with open(tosca_file, 'w') as file:
         yaml.dump(content, file, sort_keys=False)
 
-    return
+    return True
 
 
 def delete_virtual_infrastructure(inf_url):

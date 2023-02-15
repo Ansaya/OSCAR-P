@@ -14,9 +14,6 @@ import global_parameters as gp
 
 
 def run_mllibrary():
-    add_to_performance_models_json()
-    exit()
-
     print(colored("\nGenerating models...", "blue"))
 
     # sets directories
@@ -32,6 +29,7 @@ def run_mllibrary():
 
     # full training
     train_and_predict(csvs_dir, models_dir, gp.run_name)
+    add_to_performance_models_json()
 
     # interpolation tests
     # train_and_predict(interpolation_csvs_dir, interpolation_models_dir)
@@ -146,8 +144,9 @@ def add_to_performance_models_json():
     component_name, resource = gp.run_name.split('@')
     component_name = component_name.replace("C", "component")
 
-    if "partition" in component_name:
-        component_name = component_name.replace("P", "partition")
+    if "P" in component_name:
+        component_name = component_name.replace("P", "_partition")
+        component_name = component_name.replace(".", "_")
         partition_name = gp.components[component_name]["name"]
         component_name = partition_name.split("_partition")[0]
     else:

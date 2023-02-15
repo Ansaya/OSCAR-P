@@ -149,7 +149,8 @@ def generate_fdl_configuration(services, clusters):
 
         for current_service in services:
 
-            script_path = executables.script  # todo will replace with script inside images
+            script_path = executables.script  # todo will replace with script inside images (?)
+            # script_path = "/opt/script.sh"
 
             fdl_service = {
                 "name": current_service["name"],
@@ -304,6 +305,19 @@ def upload_input_files_to_storage(simple_services):
     storage_bucket, filename, _, _, _, _ = get_workflow_input()
 
     cluster = simple_services[0]["cluster"]
+
+    storage_bucket_found = False
+    command = executables.mc.get_command("ls minio-%s/" % cluster)
+    lines = get_command_output_wrapped(command)
+    for line in lines:
+        if storage_bucket in line:
+            storage_bucket_found = True
+            break
+
+    if not storage_bucket_found:
+        command = executables.mc.get_command("mb minio-%s/" % cluster)
+        get_command_output_wrapped(command)
+
     command = executables.mc.get_command("ls minio-%s/%s" % (cluster, storage_bucket))
     lines = get_command_output_wrapped(command)
     for line in lines:

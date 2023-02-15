@@ -64,10 +64,10 @@ def final_processing():  # TODO this needs to be moved/called elsewhere
     auto_mkdir(gp.results_dir)
 
     process_subfolder(simple_services)
-    # make_done_file(gp.results_dir)
+    make_done_file(gp.results_dir)
 
     if gp.is_single_service_test:
-        run_mllibrary()  # urgent generate performance models file
+        run_mllibrary()
     print(colored("Done!", "green"))
     # print("\n\n")
     return

@@ -265,7 +265,7 @@ def get_data_size(simple_services):  # missing SCAR support
 
         data_size += size
 
-    filepath = gp.application_dir + "components_data_size.yaml"
+    filepath = gp.application_dir + "oscarp/components_data_size.yaml"
     components_data_sizes = read_yaml(filepath)
 
     if name not in components_data_sizes.keys():
