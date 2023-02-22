@@ -54,15 +54,9 @@ def train_and_predict(csvs_dir, workdir, run_name):
     current_model = run_name
 
     if not gp.has_active_lambdas:
-        # with SFS
-        config_file = executables.amllibrary_sfs
-        output_dir_sfs = workdir + current_model + "_model_SFS"
-        train_models(config_file, training_set, output_dir_sfs)
-
-        # without SFS
-        config_file = executables.amllibrary_no_sfs
-        output_dir_no_sfs = workdir + current_model + "_model_noSFS"
-        train_models(config_file, training_set, output_dir_no_sfs)
+        config_file = os.path.join(gp.application_dir, "oscarp", "aMLLibrary-config.ini")
+        output_dir = workdir + current_model + "_model"
+        train_models(config_file, training_set, output_dir)
 
     else:
         # dummy
@@ -154,7 +148,7 @@ def add_to_performance_models_json():
         partition_name = component_name
 
     model_type = "CoreBasedPredictor"
-    model_path = gp.results_dir + "Models/" + gp.run_name + "_model_SFS/best.pickle"  # urgent replace with real path
+    model_path = gp.results_dir + "Models/" + gp.run_name + "_model/best.pickle"
 
     if component_name not in performance_models.keys():
         performance_models[component_name] = {}

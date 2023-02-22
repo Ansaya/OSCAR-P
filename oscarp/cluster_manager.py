@@ -47,7 +47,8 @@ def remove_all_buckets(clusters):
             buckets = get_command_output_wrapped(command)
             for bucket in buckets:
                 bucket = bucket.split()[-1]
-                if bucket != "storage/":
+                # if bucket != "storage/":  todo reenable
+                if "storage" not in bucket:
                     bucket = minio_alias + "/" + bucket
                     command = executables.mc.get_command("rb " + bucket + " --force")
                     get_command_output_wrapped(command)
@@ -199,15 +200,19 @@ def generate_fdl_storage_providers():
         "minio": {}
     }
 
-    minio_aliases = read_json(os.path.join(executables.mc.config, "config.json"))["aliases"]
+    if gp.is_debug:
+        minio_aliases = read_json(os.path.join("/home/scrapjack/.mc/", "config.json"))["aliases"]
+    else:
+        minio_aliases = read_json(os.path.join("/root/.mc/", "config.json"))["aliases"]  # todo RBF
 
     for alias in minio_aliases:
-        providers["minio"][alias] = {
-            "access_key": minio_aliases[alias]["accessKey"],
-            "endpoint": minio_aliases[alias]["url"],
-            "secret_key": minio_aliases[alias]["secretKey"],
-            "region": region
-        }
+        if "minio" in alias:
+            providers["minio"][alias] = {
+                "access_key": minio_aliases[alias]["accessKey"],
+                "endpoint": minio_aliases[alias]["url"],
+                "secret_key": minio_aliases[alias]["secretKey"],
+                "region": region
+            }
 
     auth_file = gp.application_dir + "aisprint/deployments/base/im/auth.dat"
 
@@ -303,6 +308,8 @@ def set_default_oscar_cluster_from_alias(oscarcli_alias):
 
 def upload_input_files_to_storage(simple_services):
     storage_bucket, filename, _, _, _, _ = get_workflow_input()
+    if filename is None:
+        return
 
     cluster = simple_services[0]["cluster"]
 
@@ -315,7 +322,7 @@ def upload_input_files_to_storage(simple_services):
             break
 
     if not storage_bucket_found:
-        command = executables.mc.get_command("mb minio-%s/" % cluster)
+        command = executables.mc.get_command("mb minio-%s/%s" % (cluster, storage_bucket))
         get_command_output_wrapped(command)
 
     command = executables.mc.get_command("ls minio-%s/%s" % (cluster, storage_bucket))

@@ -1,4 +1,5 @@
 import copy
+import os
 import time
 
 from termcolor import colored
@@ -7,19 +8,20 @@ from infrastructure_manager import create_virtual_infrastructures, adjust_physic
     update_virtual_infrastructures, delete_all_virtual_infrastructures, delete_unused_virtual_infrastructures
 from input_files_parser import get_resources, get_run_parameters, get_components_and_images, get_testing_components
 from deployment_generator import get_testing_units, get_deployments, reorder_deployments, \
-    get_single_services_from_deployment, make_deployments_summary, make_cluster_requirements, manage_deployment_dirs, \
-    manage_runs_dir, deployment_has_all_results
+    make_deployments_summary, make_cluster_requirements, manage_deployment_dirs, \
+    manage_runs_dir, deployment_has_all_results, get_services_to_test
 from lambda_manager import setup_scar, remove_all_lambdas
 from run_coordinator import make_oscar_p_input_file, make_services_list, make_oscar_p_input_file_single
-from oscarp.utils import auto_mkdir, show_fatal_error
+from oscarp.utils import auto_mkdir, show_fatal_error, show_warning
 
 import oscarp.oscarp as oscarp
 import global_parameters as gp
 
 
-def main(input_dir):
+def main(input_dir, is_dry=False):
 
-    gp.is_debug = True
+    gp.is_debug = False
+    gp.is_dry = is_dry
     gp.set_application_dir(input_dir)
 
     infrastructure_id_override = "b4b8ae4c-a797-11ed-b873-e65ce69e943c"
@@ -47,7 +49,8 @@ def main(input_dir):
     gp.make_campaign_dir()
     make_deployments_summary()
 
-    delete_all_virtual_infrastructures()
+    if not gp.is_dry:
+        delete_all_virtual_infrastructures()
     gp.virtual_infrastructures = {}
     gp.is_first_launch = True  # todo rename it, this is used by the GUI to print the summary
 
@@ -58,6 +61,8 @@ def main(input_dir):
     for deployment_index in range(manage_deployment_dirs(), len(gp.deployments)):
         print("\nTesting deployment_" + str(deployment_index) + ":")
 
+        deployment_index = 1  # todo RBF
+
         gp.set_current_deployment(deployment_index)
         make_cluster_requirements()
 
@@ -66,9 +71,11 @@ def main(input_dir):
         base_length = len(list(gp.clusters_node_requirements.items())[0][1]["nodes"])  # todo ugly af, change
         repetitions = gp.run_parameters["run"]["repetitions"]
 
+        """
         if base_length * repetitions < 14:
             if not gp.is_debug:
-                show_fatal_error("Not enough runs to generate ML models, increase base runs or repetitions")
+                show_warning("Not enough runs to generate ML models, increase base runs or repetitions")
+        """
 
         gp.run_parameters["run"]["main_dir"] = gp.application_dir
         gp.run_parameters["run"]["campaign_dir"] = gp.campaign_dir
@@ -95,7 +102,9 @@ def main(input_dir):
             gp.has_active_lambdas = gp.has_lambdas
 
             if gp.current_base_index < base_length:
-                adjust_physical_infrastructures_configuration()
+                # adjust_physical_infrastructures_configuration()  # todo_rbf
+                if gp.is_debug:  # todo this is temporary, replace with dry
+                    adjust_physical_infrastructures_configuration()
                 # print(colored("! Updating cluster", "magenta"))
                 update_virtual_infrastructures()
             else:
@@ -109,15 +118,13 @@ def main(input_dir):
             make_oscar_p_input_file()
             oscarp.main()
 
-            # input("Pause")  # todo RBF
-
             # # # # # # # # #
             # SERVICES LOOP #
             # # # # # # # # #
 
             gp.tested_services = []
             # auto_mkdir(gp.current_deployment_dir + "single_services/")
-            services_in_deployment, services_to_test = get_single_services_from_deployment()
+            services_in_deployment, services_to_test = get_services_to_test()
             gp.is_single_service_test = True
 
             print("\nTesting services of deployment_" + str(deployment_index) + ":")
@@ -146,4 +153,4 @@ def main(input_dir):
 
 
 if __name__ == '__main__':
-    main("Tosca_project")
+    main("Tosca_project", False)

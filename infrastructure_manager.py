@@ -26,6 +26,8 @@ import oscarp.oscarp as oscarp
 # # # # # # # # # # # #
 
 def create_virtual_infrastructures(infrastructure_id_override):
+    if gp.is_dry:
+        return
 
     # virtual is the list of the infrastructures that need to be deployed
     # an infrastructure is added as long as: 1_ it's not AWS lambda, 2_ it's not physical, 3_ it's not already deployed
@@ -41,13 +43,13 @@ def create_virtual_infrastructures(infrastructure_id_override):
     else:
         return
 
-    delete_unused_virtual_infrastructures()
-
     auto_mkdir(gp.current_deployment_dir + ".toscarizer")
     to_deploy = _generate_modified_candidate_files(virtual)
     tosca_files = generate_tosca()
 
     cleaned_tosca_files = clean_and_rename_tosca_files(to_deploy, tosca_files)
+
+    delete_unused_virtual_infrastructures()
 
     for tosca_file in cleaned_tosca_files:
         resource = tosca_file.split('/')[-1].split('.')[0]
@@ -199,6 +201,9 @@ def wait_for_infrastructure_deployment(is_update=False):
             state = get_state(inf_url, gp.application_dir)
             if state != "configured":
                 completed = False
+
+    if not is_update:
+        time.sleep(30)
     return
 
 
@@ -267,6 +272,8 @@ def get_outputs(inf_url):
 
 
 def update_virtual_infrastructures():
+    if gp.is_dry:
+        return
 
     if not gp.virtual_infrastructures:  # if empty return
         return

@@ -104,17 +104,24 @@ def reorder_deployments(deployments, resources):
     return reordered_deployments
 
 
-def get_single_services_from_deployment():
+def get_services_to_test():
 
-    services_in_deployment = []
-    services_to_test = []
+    services_to_test = gp.deployments[gp.current_deployment_index]
 
-    for c in gp.current_deployment:
-        services_in_deployment.append(c)
-        if c not in gp.tested_services:
-            services_to_test.append(c)
+    if gp.current_deployment_index == 0:
+        return services_to_test, services_to_test
 
-    gp.tested_services += services_to_test  # todo should this be here?
+    tested_services = []
+
+    for i in range(gp.current_deployment_index):
+        for unit in gp.deployments[i]:
+            tested_services.append(unit)
+
+    for unit in services_to_test:
+        if unit in tested_services:
+            services_to_test.remove(unit)
+
+    services_in_deployment = gp.deployments[gp.current_deployment_index]
 
     return services_in_deployment, services_to_test
 

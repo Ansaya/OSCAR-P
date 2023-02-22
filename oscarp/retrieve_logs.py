@@ -247,6 +247,15 @@ def save_timelist_to_file(timed_job_list, service_name):
 
 def get_data_size(simple_services):  # missing SCAR support
     name = simple_services[0]["name"]
+
+    if "-partition" in name:
+        a, b = name.split("-partition")
+        name = a + "_partition" + b
+        print(name)
+        name = list(name)
+        name[-2] = '_'
+        name = "".join(name)
+
     cluster = simple_services[0]["cluster"]
     output_bucket = simple_services[0]["output"][2]
     command = executables.mc.get_command("ls minio-%s/%s" % (cluster, output_bucket))

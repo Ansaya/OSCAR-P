@@ -7,7 +7,7 @@ global current_deployment, clusters_node_requirements, virtual_infrastructures
 global current_deployment_index, current_base_index, current_run_index, current_services, tested_services
 global scar_logs_end_indexes
 global is_single_service_test, has_lambdas, has_active_lambdas, is_last_run, is_first_launch
-global is_debug
+global is_debug, is_dry
 
 """
     * application_dir: directory of the whole project

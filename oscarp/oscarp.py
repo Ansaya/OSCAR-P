@@ -4,6 +4,7 @@
 import os
 
 import executables
+import global_parameters as gp
 
 from termcolor import colored
 
@@ -17,11 +18,9 @@ from process_logs import make_csv_table, make_done_file
 from retrieve_logs import pull_logs, pull_scar_logs, get_data_size
 from run_manager import move_input_files_to_input_bucket, wait_services_completion, move_input_files_to_s3_bucket
 from mllibrary_manager import run_mllibrary
-from utils import auto_mkdir, show_warning, delete_directory
+from utils import auto_mkdir, show_warning, delete_directory, get_command_output_wrapped
 
 global clusters, runs, run, simple_services, repetitions, current_run_dir, banner_name
-
-import global_parameters as gp
 
 
 def prepare_clusters():
@@ -139,6 +138,21 @@ def main():
     repetitions, cooldown, stop_at_run = get_run_info()
     current_run_index = stop_at_run - 1
 
+    if gp.is_first_launch:
+        resource = "VM1"
+        oscar_endpoint = "https://quirky-kowalevski6.im.grycap.net/"
+        oscar_password = "oscar-aisprint-2022"
+        command = "cluster add oscar-%s %s oscar %s" % (resource, oscar_endpoint, oscar_password)
+        command = executables.oscar_cli.get_command(command)
+        get_command_output_wrapped(command)
+
+        # set for mc
+        minio_endpoint = "https://minio.quirky-kowalevski6.im.grycap.net/"
+        minio_password = "minio-aisprint-2022"
+        command = "alias set minio-%s %s minio %s" % (resource, minio_endpoint, minio_password)
+        command = executables.mc.get_command(command)
+        get_command_output_wrapped(command)
+
     global banner_name
     if gp.run_name == "Full_workflow":
         banner_name = "(full workflow)"
@@ -161,6 +175,9 @@ def main():
         if gp.is_first_launch:
             show_runs(base, repetitions, clusters)
             gp.is_first_launch = False
+
+        if gp.is_dry:
+            exit()
 
         current_run_dir = os.path.join(gp.runs_dir, run["id"])
         auto_mkdir(current_run_dir)

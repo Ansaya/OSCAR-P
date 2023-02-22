@@ -38,7 +38,7 @@ def get_resources():
     # add info if node is physical
     for name, resource in resources.items():
         if name in list(physical_nodes.keys()):
-            resource["is_physical"] = True
+            resource["is_physical"] = True  # urgent, fix, check in candidate_resource instead
             resource["ssh"] = physical_nodes[name]["ssh"]
 
     # add fake cluster for Lambda/SCAR

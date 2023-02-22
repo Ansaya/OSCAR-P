@@ -11,6 +11,9 @@ import global_parameters as gp
 
 
 def setup_scar():
+    if gp.is_dry:
+        return
+
     if gp.has_lambdas:
         remove_all_lambdas()
         remove_s3_buckets()

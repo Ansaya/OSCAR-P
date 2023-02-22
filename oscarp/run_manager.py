@@ -35,7 +35,6 @@ def move_input_files_to_input_bucket(service):  # todo branch, should handle dif
     minio_alias = service["storage_provider_alias"]
 
     # if no filename is specified I just clone the whole storage bucket
-    # used for example when testing a single service to clone the output bucket fo the previous service
     if filename is None:
         duplicate_bucket(service, storage_bucket, service["input_bucket"])
         return
