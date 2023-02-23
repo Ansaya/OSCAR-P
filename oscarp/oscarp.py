@@ -138,21 +138,6 @@ def main():
     repetitions, cooldown, stop_at_run = get_run_info()
     current_run_index = stop_at_run - 1
 
-    if gp.is_first_launch:
-        resource = "VM1"
-        oscar_endpoint = "https://quirky-kowalevski6.im.grycap.net/"
-        oscar_password = "oscar-aisprint-2022"
-        command = "cluster add oscar-%s %s oscar %s" % (resource, oscar_endpoint, oscar_password)
-        command = executables.oscar_cli.get_command(command)
-        get_command_output_wrapped(command)
-
-        # set for mc
-        minio_endpoint = "https://minio.quirky-kowalevski6.im.grycap.net/"
-        minio_password = "minio-aisprint-2022"
-        command = "alias set minio-%s %s minio %s" % (resource, minio_endpoint, minio_password)
-        command = executables.mc.get_command(command)
-        get_command_output_wrapped(command)
-
     global banner_name
     if gp.run_name == "Full_workflow":
         banner_name = "(full workflow)"
