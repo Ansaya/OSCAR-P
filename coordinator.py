@@ -18,7 +18,7 @@ import oscarp.oscarp as oscarp
 import global_parameters as gp
 
 
-def main(input_dir, is_dry=False):
+def main(input_dir, is_dry):
 
     gp.is_debug = False
     gp.is_dry = is_dry
