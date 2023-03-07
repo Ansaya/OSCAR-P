@@ -4,6 +4,7 @@ from oscarp.utils import show_error, show_fatal_error
 
 import global_parameters as gp
 
+import re
 
 def get_resources():
 
@@ -188,11 +189,29 @@ def get_testing_components():
 
 
 def shorten_key(name):
-    if "partition" in name:
-        c, p, i = name.split("_")
-        c = c.strip("component")
-        p = p.strip("partition")
-        return "C" + str(c) + "P" + str(p) + "." + str(i)
-    else:
-        c = name.strip("component")
-        return "C" + str(c)
+    match = re.match(r"^component(\d+)(_partition(\w+)_(\d+))?$", name)
+    if match:
+        component = match.group(1)
+        partition = match.group(2)
+        if partition:
+            partition = match.group(3)
+            index = match.group(4)
+            skey = f"C{component}P{partition}.{index}"
+        else:
+            skey = f"C{component}"
+        return skey
+    return name
+
+def shorten_key_reverse(name):
+    match = re.match(r"^C(\d+)(P(\w+).(\d+))?$", name)
+    if match:
+        component_num = match.group(1)
+        partition = match.group(2)
+        if partition:
+            # partition = match.group(3)
+            index = match.group(4)
+            rkey = f"component{component_num}_partitionX_{index}"
+        else:
+            rkey = f"component{component_num}"
+        return rkey
+    return name
