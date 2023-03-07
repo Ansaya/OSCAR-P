@@ -20,6 +20,8 @@ import global_parameters as gp
 
 import oscarp.oscarp as oscarp
 
+from input_files_parser import shorten_key_reverse
+
 
 # # # # # # # # # # # #
 # Virtual infrastructures
@@ -74,7 +76,7 @@ def _generate_modified_candidate_files(virtual,):
     to_deploy = {}
 
     for c, r in virtual:
-        c = c.replace("C", "component")
+        c = shorten_key_reverse(c)
 
         if r not in to_deploy.keys():
             to_deploy[r] = components[c]["name"]
