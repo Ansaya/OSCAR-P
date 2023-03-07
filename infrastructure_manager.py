@@ -101,9 +101,10 @@ def generate_tosca():
     dag = parse_dag("%s%s" % (gp.application_dir, BASE_DAG_FILE))
     deployments_file = "%s/.toscarizer/modified_candidate_deployments.yaml" % gp.current_deployment_dir
     resources_file = "%s%s" % (gp.application_dir, RESOURCES_FILE)
+    domain_name = gp.run_parameters["other"]["domain_name"]
 
     toscas = gen_tosca_yamls(dag, resources_file, deployments_file,
-                             "%s%s" % (gp.application_dir, PHYSICAL_NODES_FILE), elastic, auth_data)
+                             "%s%s" % (gp.application_dir, PHYSICAL_NODES_FILE), elastic, auth_data, domain_name)
 
     tosca_files = []
 
