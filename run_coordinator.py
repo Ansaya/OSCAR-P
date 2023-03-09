@@ -197,7 +197,7 @@ def make_services_list():
     today = date.today().strftime("%d%m%y")
     s3_main_bucket_name = "scar-bucket-"
     s3_main_bucket_name += today + "-" + str(random.randint(100, 999))
-    s3_main_bucket_name = "scar-bucket-130123-509"
+    # s3_main_bucket_name = "scar-bucket-130123-509"
 
     i = 0
 

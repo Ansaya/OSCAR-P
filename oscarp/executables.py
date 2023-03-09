@@ -3,7 +3,7 @@ global mc, oscar_cli, ssh, ssh_key, script, amllibrary_dummy
 
 class Mc:
     def __init__(self, mc_dir):
-        self.mc = mc_dir + "mc "
+        self.mc = mc_dir + "mc --insecure "
         self.config = mc_dir + "mc_config"
 
     def get_command(self, command):

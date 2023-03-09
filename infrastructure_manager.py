@@ -93,6 +93,8 @@ def _generate_modified_candidate_files(virtual,):
 
 
 def generate_tosca():
+    domain_name = gp.run_parameters["other"]["domain_name"]
+
     elastic = 0
     auth_data = None
 
@@ -101,7 +103,7 @@ def generate_tosca():
     resources_file = "%s%s" % (gp.application_dir, RESOURCES_FILE)
 
     toscas = gen_tosca_yamls(dag, resources_file, deployments_file,
-                             "%s%s" % (gp.application_dir, PHYSICAL_NODES_FILE), elastic, auth_data)
+                             "%s%s" % (gp.application_dir, PHYSICAL_NODES_FILE), elastic, auth_data, domain=domain_name)
 
     tosca_files = []
 
@@ -117,12 +119,12 @@ def generate_tosca():
 
 def clean_and_rename_tosca(tosca_file, component_name, resource, node_requirements):
     # domain_name = "polimi-aisprint.click"
-    domain_name = gp.run_parameters["other"]["domain_name"]
+    # domain_name = gp.run_parameters["other"]["domain_name"]
 
     with open(tosca_file, 'r') as file:
         content = yaml.safe_load(file)
 
-    content["topology_template"]["inputs"]["domain_name"]["default"] = domain_name
+    # content["topology_template"]["inputs"]["domain_name"]["default"] = domain_name
 
     content["topology_template"]["node_templates"]["oscar"]["properties"]["yunikorn_enable"] = True
     content["topology_template"]["node_templates"]["lrms_front_end"]["properties"]["install_yunikorn"] = True
@@ -130,7 +132,13 @@ def clean_and_rename_tosca(tosca_file, component_name, resource, node_requiremen
     del (content["topology_template"]["node_templates"]["oscar_service_" + component_name])
     del (content["topology_template"]["outputs"]["oscar_service_url"])
     del (content["topology_template"]["outputs"]["oscar_service_cred"])
-    content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"] = \
+
+    key = "wn_resource1"
+    for key in content["topology_template"]["node_templates"].keys():
+        if "wn_resource" in key:
+            break
+
+    content["topology_template"]["node_templates"][key]["capabilities"]["scalable"]["properties"]["count"] = \
         node_requirements[resource]["nodes"][0]
 
     filename = gp.current_deployment_dir + ".toscarizer/" + resource + ".yaml"
@@ -201,6 +209,8 @@ def wait_for_infrastructure_deployment(is_update=False):
             state = get_state(inf_url, gp.application_dir)
             if state != "configured":
                 completed = False
+            if state == "failed" or state == "unconfigured":
+                show_fatal_error("The deployment of an infrastructure failed.")
 
     if not is_update:
         time.sleep(30)
@@ -237,7 +247,7 @@ def configure_executables():  # todo this will also have to include physical inf
         # set for oscar_cli
         oscar_endpoint = outputs["oscarui_endpoint"]
         oscar_password = outputs["oscar_password"]
-        command = "cluster add oscar-%s %s oscar %s" % (resource, oscar_endpoint, oscar_password)
+        command = "cluster add oscar-%s %s oscar %s  --disable-ssl" % (resource, oscar_endpoint, oscar_password)
         command = oscarp.executables.oscar_cli.get_command(command)
         get_command_output_wrapped(command)
 
@@ -296,13 +306,18 @@ def update_tosca(tosca_file, resource, node_requirements, current_base_run_index
     with open(tosca_file, 'r') as file:
         content = yaml.safe_load(file)
 
-    old_value = content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"]
+    key = "wn_resource1"
+    for key in content["topology_template"]["node_templates"].keys():
+        if "wn_resource" in key:
+            break
+
+    old_value = content["topology_template"]["node_templates"][key]["capabilities"]["scalable"]["properties"]["count"]
     new_value = node_requirements[resource]["nodes"][current_base_run_index]
 
     if old_value == new_value:
         return False
 
-    content["topology_template"]["node_templates"]["wn_resource1"]["capabilities"]["scalable"]["properties"]["count"] = \
+    content["topology_template"]["node_templates"][key]["capabilities"]["scalable"]["properties"]["count"] = \
         new_value
 
     with open(tosca_file, 'w') as file:

@@ -171,6 +171,8 @@ def pull_scar_logs(name, services):
     global run_name  # todo run_name is actually a path to the run dir, fix
     run_name = name
 
+    os.system("mkdir \"" + run_name + "/logs_scar\"")
+
     date_format = "%H:%M:%S,%f"
 
     command = "scar ls"
@@ -222,17 +224,19 @@ def get_scar_log(function, update_marker=False):
     command = "scar log -n " + function
     log = get_command_output_wrapped(command)
 
+    cropped_log = log
+
     if function in gp.scar_logs_end_indexes.keys():
         index_last_line = gp.scar_logs_end_indexes[function]
-        log = log[index_last_line:]
+        cropped_log = log[index_last_line:]
 
     if update_marker:
         gp.scar_logs_end_indexes[function] = len(log) - 1
 
-        with open(run_name + "/scar_log.txt", "w") as file:
-            file.writelines(log)
+        with open(run_name + "/logs_scar/" + function + ".txt", "w") as file:
+            file.writelines(cropped_log)
 
-    return log
+    return cropped_log
 
 
 # dumps a timelist to file

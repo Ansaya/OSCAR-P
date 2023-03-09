@@ -15,7 +15,7 @@ from datetime import date
 
 from input_file_processing import get_debug, get_closest_parallelism_level, get_workflow_input
 from utils import configure_ssh_client, get_ssh_output, get_command_output_wrapped, show_debug_info, \
-    make_debug_info, show_warning, show_fatal_error, read_json
+    make_debug_info, show_warning, show_fatal_error, read_json, auto_mkdir
 
 import global_parameters as gp
 
@@ -150,7 +150,7 @@ def generate_fdl_configuration(services, clusters):
 
         for current_service in services:
 
-            script_path = executables.script  # todo will replace with script inside images (?)
+            script_path = generate_service_script(current_service["name"])
             # script_path = "/opt/script.sh"
 
             fdl_service = {
@@ -158,8 +158,6 @@ def generate_fdl_configuration(services, clusters):
                 "input": [{"path": "", "storage_provider": ""}],
                 "output": [{"path": "", "storage_provider": ""}]
             }
-
-            # urgent test service-wise cpu and memory limits (YuniKorn)
 
             if not current_service["is_lambda"]:
                 fdl_service["input"][0]["storage_provider"] = "minio.default"
@@ -235,6 +233,24 @@ def generate_fdl_storage_providers():
         }
 
     return providers
+
+
+def generate_service_script(component_name):
+
+    scripts_folder = gp.current_deployment_dir + ".scripts/"
+    auto_mkdir(scripts_folder)
+    service_script_path = scripts_folder + component_name + "_script.sh"
+
+    if "-partition" in component_name:
+        component_name = component_name.split("-partition")[0]
+
+    component_name = component_name.replace('-', '_')
+
+    with open(service_script_path, "w") as file:
+        lines = ["!/bin/bash\n", "sh /opt/%s/script.sh\n" % component_name]
+        file.writelines(lines)
+
+    return service_script_path
 
 
 def apply_fdl_configuration_wrapped(services):
