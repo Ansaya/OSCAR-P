@@ -25,11 +25,9 @@ def main(input_dir, is_dry):
     gp.set_application_dir(input_dir)
 
     infrastructure_id_override = "b4b8ae4c-a797-11ed-b873-e65ce69e943c"
+    oscarp.executables.init(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./oscarp/executables/"))
 
-    if gp.is_debug:
-        oscarp.executables.init("oscarp/executables/")
-    else:
-        oscarp.executables.init("/bin/oscarp_executables/")
+    if not gp.is_debug:
         infrastructure_id_override = None
 
     # get the necessary info from the different input file
