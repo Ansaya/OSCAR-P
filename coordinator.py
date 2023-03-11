@@ -20,7 +20,7 @@ import global_parameters as gp
 
 def main(input_dir, is_dry):
 
-    gp.is_debug = False
+    gp.is_debug = True
     gp.is_dry = is_dry
     gp.set_application_dir(input_dir)
 
@@ -60,8 +60,6 @@ def main(input_dir, is_dry):
 
     for deployment_index in range(manage_deployment_dirs(), len(gp.deployments)):
         print("\nTesting deployment_" + str(deployment_index) + ":")
-
-        deployment_index = 1  # todo RBF
 
         gp.set_current_deployment(deployment_index)
         make_cluster_requirements()
@@ -153,4 +151,4 @@ def main(input_dir, is_dry):
 
 
 if __name__ == '__main__':
-    main("Tosca_project", False)
+    main("Gordon_project", False)

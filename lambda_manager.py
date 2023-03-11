@@ -5,6 +5,7 @@ from termcolor import colored
 
 
 import oscarp.oscarp as oscarp
+from oscarp.cluster_manager import generate_service_script
 from oscarp.utils import get_command_output_wrapped, show_fatal_error
 
 import global_parameters as gp
@@ -71,8 +72,10 @@ def generate_scar_fdl_configuration():
                     "memory": int(service["memory"]),
                     "container": {"image": service["image"]},
                     "runtime": "image",
+                    "log_level": "DEBUG",
                     "region": "us-east-1",
-                    "init_script": generate_script_lambda(script_path, service["name"]),
+                    "init_script": generate_script_lambda(script_path, service["name"])
+                    # "init_script": generate_service_script(service["name"]),
                 }}
 
                 fdl_lambdas.append(fdl_lambda)
@@ -127,6 +130,8 @@ def verify_correct_scar_deployment():
 def generate_script_lambda(script_path, name):
     if "-partition" in name:
         name = name.split("-partition")[0]
+
+    name = name.replace('-', '_')
 
     with open(script_path) as file:
         lines = file.readlines()

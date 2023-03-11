@@ -195,7 +195,7 @@ def make_cluster_requirements():
                 nr = math.ceil(parallelism[x] * node_per_container)  # node requirement for current parallelism
                 nr += prev_node_requirements[x]  # node requirement for current parallelism, for all services up to now
                 node_requirements.append(nr)
-                if nr > total_nodes:
+                if nr > total_nodes and resource != "AWS Lambda":
                     show_fatal_error("Resource {} has {} nodes, but {} are needed for testing"
                                      .format(resource, total_nodes, nr))
 

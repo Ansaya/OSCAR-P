@@ -198,7 +198,6 @@ def wait_oscar_service_completion(service):
                 if j["status"] == "Failed":
                     show_error("Job " + j["name"] + " failed")  # todo use fatal error
                     completed = False
-                    quit()
         pbar.n = i
         pbar.refresh()
 

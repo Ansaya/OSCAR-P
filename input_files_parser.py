@@ -1,13 +1,12 @@
 import yaml
 
-from oscarp.utils import show_error, show_fatal_error
+from oscarp.utils import show_error, show_fatal_error, read_yaml
 
 import global_parameters as gp
 
 import re
 
 def get_resources():
-
     physical_nodes = _get_physical_nodes(gp.application_dir)
 
     with open(gp.application_dir + "common_config/candidate_resources.yaml") as file:
@@ -19,19 +18,20 @@ def get_resources():
             for cl_name, cl in nd["ComputationalLayers"].items():
                 for resource in list(cl["Resources"].values()):
                     name = resource["name"]
-                    processor = list(resource["processors"].values())[0]
+                    if name != "AWS Lambda":
+                        processor = list(resource["processors"].values())[0]
 
-                    resources[name] = {
-                        "is_physical": False,
-                        "oscarcli_alias": "oscar-" + name,
-                        "storage_provider": "minio",
-                        "storage_provider_alias": "minio-" + name,
-                        "ssh": None,
-                        "total_nodes": resource["totalNodes"],
-                        "max_cpu_cores": float(processor["computingUnits"]),
-                        "max_memory_mb": resource["memorySize"],
-                        "execution_layer": cl["number"]  # needed for modified candidate deployments file
-                    }
+                        resources[name] = {
+                            "is_physical": False,
+                            "oscarcli_alias": "oscar-" + name,
+                            "storage_provider": "minio",
+                            "storage_provider_alias": "minio-" + name,
+                            "ssh": None,
+                            "total_nodes": resource["totalNodes"],
+                            "max_cpu_cores": float(processor["computingUnits"]),
+                            "max_memory_mb": resource["memorySize"],
+                            "execution_layer": cl["number"]  # needed for modified candidate deployments file
+                        }
 
     # todo change this, if the node is physical it is written in candidate_resources.yaml
     # todo then look for matches in physical_nodes.yaml, if not found throw fatal error
@@ -58,8 +58,7 @@ def get_resources():
 
 
 def _get_physical_nodes(application_dir):
-    with open(application_dir + "common_config/physical_nodes.yaml") as file:
-        physical_nodes_file = yaml.load(file, Loader=yaml.Loader)
+    physical_nodes_file = read_yaml(application_dir + "common_config/physical_nodes.yaml")
 
     physical_nodes = {}
     for _, cl in physical_nodes_file["ComputationalLayers"].items():

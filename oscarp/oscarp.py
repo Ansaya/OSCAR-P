@@ -47,7 +47,9 @@ def end_run_full(current_run_index):
     make_csv_table(current_run_dir, run["services"], clusters, current_run_index)
     # download_bucket(campaign_dir + "/Database", "database")
     if gp.is_single_service_test and gp.current_base_index == 0:  # first run and testing a single service
-        get_data_size(simple_services)
+        if not gp.has_active_lambdas:  # if it's currently testing a lambda
+            # urgent implement data_size calculation for lambda
+            get_data_size(simple_services)
     make_done_file(current_run_dir)
 
 
