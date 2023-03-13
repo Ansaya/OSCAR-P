@@ -198,11 +198,8 @@ def generate_fdl_storage_providers():
         "minio": {}
     }
 
-    if gp.is_debug:
-        minio_aliases = read_json(os.path.join("/home/scrapjack/.mc/", "config.json"))["aliases"]
-    else:
-        minio_aliases = read_json(os.path.join("/root/.mc/", "config.json"))["aliases"]  # todo RBF
-
+    mc_config = os.path.join(os.path.expanduser("~"), ".mc/config.json")
+    minio_aliases = read_json(mc_config)["aliases"]
     for alias in minio_aliases:
         if "minio" in alias:
             providers["minio"][alias] = {
@@ -212,8 +209,7 @@ def generate_fdl_storage_providers():
                 "region": region
             }
 
-    auth_file = gp.application_dir + "aisprint/deployments/base/im/auth.dat"
-
+    auth_file = os.path.join(gp.application_dir, "aisprint/deployments/base/im/auth.dat")
     if os.path.exists(auth_file):
         with open(auth_file, "r") as file:
             lines = file.readlines()
@@ -224,13 +220,13 @@ def generate_fdl_storage_providers():
                             access_key = segment.strip("username = ")
                         elif "password" in segment:
                             secret_key = segment.strip("password = ")
-
-        providers["s3"] = {}
-        providers["s3"]["aws"] = {
-            "access_key": access_key,
-            "region": region,
-            "secret_key": secret_key
-        }
+                    providers["s3"] = {}
+                    providers["s3"]["aws"] = {
+                        "access_key": access_key,
+                        "region": region,
+                        "secret_key": secret_key
+                    }
+                    break
 
     return providers
 
